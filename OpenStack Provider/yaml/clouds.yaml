@@ -1,0 +1,15 @@
+clouds:
+  openstack:
+    auth:
+      auth_url: "https://192.168.112.200:5000"
+      username: "admin"
+      password: "password"
+      project_id: f2e86350bc41453481ff1574550a4132
+      domain_name: "default"
+      user_domain_name: "default"
+    region_name: "RegionOne"
+    interface: "public"
+    identity_api_version: 3
+    verify: false
+    cacert: ./my.pem
+

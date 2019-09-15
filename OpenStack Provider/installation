@@ -1,0 +1,73 @@
+1. Project Home Page:
+  the Cluster API Provider OpenStack repo is here: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/tree/release-0.1
+
+2. Installation Instructions:
+2.1 prepare the environment:
+    a. command line tools: kubectl, kind, go, docker
+    b. download the clusterctl source code, and compile the executable binary for clusterctl
+    c. prepare the openstack environment, you need below things:
+        - uuid of network, security group for k8s cluster
+        - image name for k8s nodes creation
+        - the floating ip to ssh the k8s nodes
+        - the keypair for ssh the k8s nodes
+        - uuid of project, user name, password, domain name, region name
+    d. the client pc you are running the cli tools should have the remote access to the Nova Node you will be creating.
+
+3. step-by-step
+3.1 get the required command line tools installed
+
+3.2 compile the clusterctl
+    git clone https://github.com/kubernetes-sigs/cluster-api-provider-openstack $GOPATH/src/sigs.k8s.io/cluster-api-provider-openstack
+    cd $GOPATH/src/sigs.k8s.io/cluster-api-provider-openstack/
+    make clusterctl
+    ## notes: the command is a bit different for release-0.1
+
+3.3 prepare the openstack yaml files:
+
+    - cloud.yaml
+    goto examples under source code /root/go/src/sigs.k8s.io/cluster-api-provider-openstack/cmd/clusterctl/examples/openstack
+    create a file cloud.yaml, which will have your openstack access info:
+
+    clouds:
+    openstack:
+        auth:
+        auth_url: "https://192.168.112.200:5000"
+        username: "admin"
+        password: "password"
+        project_id: f2e86350bc41453481ff1574550a4132
+        domain_name: "default"
+        user_domain_name: "default"
+        region_name: "RegionOne"
+        interface: "public"
+        identity_api_version: 3
+        verify: false
+        cacert: ./ca.pem
+
+    - generate yaml files for cluster api
+    ./generate-yaml.sh ./clouds.yaml openstack ubuntu
+
+    - modify the yaml file with your openstack environment info:
+    sed -i 's/<Available Floating IP>/your_floating_ip/' examples/openstack/out/*.yaml
+    Please be noted there are multiple floating ip need to update.
+
+    sed -i 's/<Kubernetes Network ID>/your_neutron_network_id/g' examples/openstack/out/*.yaml
+    sed -i 's/<Security Group ID>/your_neutron_secgroup_id/g' examples/openstack/out/*.yaml
+    sed -i 's/<Image Name>/your_image_NAME/g' examples/openstack/out/*.yaml
+    sed -i 's/<apiServerLoadBalancer or master IP>/your_master_node_floating_ip/g' examples/openstack/out/*.yaml
+
+    - create a keypair in openstack
+    openstack keypair create --public-key ~/.ssh/openstack_tmp.pub cluster-api-provider-openstack
+
+    - creat the cluster:
+    ./clusterctl create cluster --bootstrap-type kind --provider openstack \
+    -c examples/openstack/out/cluster.yaml -m examples/openstack/out/machines.yaml \
+    -p examples/openstack/out/provider-components.yaml
+
+    - my test stoped here, i could see the master node is created in my openstack environment. But my client could not ssh to the master nodes since having routing issues.
+    # openstack server list
+    +--------------------------------------+------------------------+--------+---------------------------+------------+-----------+
+    | ID                                   | Name                   | Status | Networks                  | Image      | Flavor    |
+    +--------------------------------------+------------------------+--------+---------------------------+------------+-----------+
+    | 2da7e15e-3a32-4c4b-bfb8-2bcadf269c8d | openstack-master-tdkvl | ACTIVE | net=10.1.1.184, 5.5.5.199 | ubuntu     | m1.medium |
+    | 9583f420-c510-4dde-8efe-6b2fa6c501bd | my-nova-1              | ACTIVE | net=10.1.1.25, 5.5.5.178  | others     | m1.small  |
+    +--------------------------------------+------------------------+--------+---------------------------+------------+-----------+

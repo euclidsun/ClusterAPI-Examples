@@ -1,0 +1,2618 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: openstack-provider-system
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: openstackclusterproviderspecs.openstackproviderconfig.k8s.io
+spec:
+  group: openstackproviderconfig.k8s.io
+  names:
+    kind: OpenstackClusterProviderSpec
+    plural: openstackclusterproviderspecs
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiServerLoadBalancerAdditionalPorts:
+          description: APIServerLoadBalancerAdditionalPorts adds additional ports
+            to the APIServerLoadBalancer
+          items:
+            format: int64
+            type: integer
+          type: array
+        apiServerLoadBalancerFloatingIP:
+          description: APIServerLoadBalancerFloatingIP is the floatingIP which will
+            be associated to the APIServer loadbalancer. The floatingIP will be created
+            if it not already exists.
+          type: string
+        apiServerLoadBalancerPort:
+          description: APIServerLoadBalancerPort is the port on which the listener
+            on the APIServer loadbalancer will be created
+          format: int64
+          type: integer
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        caKeyPair:
+          description: CAKeyPair is the key pair for ca certs.
+          properties:
+            cert:
+              description: base64 encoded cert and key
+              format: byte
+              type: string
+            key:
+              format: byte
+              type: string
+          type: object
+        cloudName:
+          description: The name of the cloud to use from the clouds secret
+          type: string
+        cloudsSecret:
+          description: The name of the secret containing the openstack credentials
+          type: object
+        clusterConfiguration:
+          description: ClusterConfiguration holds the cluster-wide information used
+            during a kubeadm init call.
+          properties:
+            apiServer:
+              description: APIServer contains extra settings for the API server control
+                plane component
+              properties:
+                certSANs:
+                  description: CertSANs sets extra Subject Alternative Names for the
+                    API Server signing cert.
+                  items:
+                    type: string
+                  type: array
+                extraArgs:
+                  description: 'ExtraArgs is an extra set of flags to pass to the
+                    control plane component. TODO: This is temporary and ideally we
+                    would like to switch all components to use ComponentConfig + ConfigMaps.'
+                  type: object
+                extraVolumes:
+                  description: ExtraVolumes is an extra set of host volumes, mounted
+                    to the control plane component.
+                  items:
+                    properties:
+                      hostPath:
+                        description: HostPath is the path in the host that will be
+                          mounted inside the pod.
+                        type: string
+                      mountPath:
+                        description: MountPath is the path inside the pod where hostPath
+                          will be mounted.
+                        type: string
+                      name:
+                        description: Name of the volume inside the pod template.
+                        type: string
+                      pathType:
+                        description: PathType is the type of the HostPath.
+                        type: string
+                      readOnly:
+                        description: ReadOnly controls write access to the volume
+                        type: boolean
+                    required:
+                    - name
+                    - hostPath
+                    - mountPath
+                    type: object
+                  type: array
+                timeoutForControlPlane:
+                  description: TimeoutForControlPlane controls the timeout that we
+                    use for API server to appear
+                  type: string
+              type: object
+            apiVersion:
+              description: 'APIVersion defines the versioned schema of this representation
+                of an object. Servers should convert recognized schemas to the latest
+                internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+              type: string
+            certificatesDir:
+              description: CertificatesDir specifies where to store or look for all
+                required certificates.
+              type: string
+            clusterName:
+              description: The cluster name
+              type: string
+            controlPlaneEndpoint:
+              description: 'ControlPlaneEndpoint sets a stable IP address or DNS name
+                for the control plane; it can be a valid IP address or a RFC-1123
+                DNS subdomain, both with optional TCP port. In case the ControlPlaneEndpoint
+                is not specified, the AdvertiseAddress + BindPort are used; in case
+                the ControlPlaneEndpoint is specified but without a TCP port, the
+                BindPort is used. Possible usages are: e.g. In a cluster with more
+                than one control plane instances, this field should be assigned the
+                address of the external load balancer in front of the control plane
+                instances. e.g.  in environments with enforced node recycling, the
+                ControlPlaneEndpoint could be used for assigning a stable DNS to the
+                control plane.'
+              type: string
+            controllerManager:
+              description: ControllerManager contains extra settings for the controller
+                manager control plane component
+              properties:
+                extraArgs:
+                  description: 'ExtraArgs is an extra set of flags to pass to the
+                    control plane component. TODO: This is temporary and ideally we
+                    would like to switch all components to use ComponentConfig + ConfigMaps.'
+                  type: object
+                extraVolumes:
+                  description: ExtraVolumes is an extra set of host volumes, mounted
+                    to the control plane component.
+                  items:
+                    properties:
+                      hostPath:
+                        description: HostPath is the path in the host that will be
+                          mounted inside the pod.
+                        type: string
+                      mountPath:
+                        description: MountPath is the path inside the pod where hostPath
+                          will be mounted.
+                        type: string
+                      name:
+                        description: Name of the volume inside the pod template.
+                        type: string
+                      pathType:
+                        description: PathType is the type of the HostPath.
+                        type: string
+                      readOnly:
+                        description: ReadOnly controls write access to the volume
+                        type: boolean
+                    required:
+                    - name
+                    - hostPath
+                    - mountPath
+                    type: object
+                  type: array
+              type: object
+            dns:
+              description: DNS defines the options for the DNS add-on installed in
+                the cluster.
+              properties:
+                imageRepository:
+                  description: ImageRepository sets the container registry to pull
+                    images from. if not set, the ImageRepository defined in ClusterConfiguration
+                    will be used instead.
+                  type: string
+                imageTag:
+                  description: ImageTag allows to specify a tag for the image. In
+                    case this value is set, kubeadm does not change automatically
+                    the version of the above components during upgrades.
+                  type: string
+                type:
+                  description: Type defines the DNS add-on to be used
+                  type: string
+              required:
+              - type
+              type: object
+            etcd:
+              description: Etcd holds configuration for etcd.
+              properties:
+                external:
+                  description: External describes how to connect to an external etcd
+                    cluster Local and External are mutually exclusive
+                  properties:
+                    caFile:
+                      description: CAFile is an SSL Certificate Authority file used
+                        to secure etcd communication. Required if using a TLS connection.
+                      type: string
+                    certFile:
+                      description: CertFile is an SSL certification file used to secure
+                        etcd communication. Required if using a TLS connection.
+                      type: string
+                    endpoints:
+                      description: Endpoints of etcd members. Required for ExternalEtcd.
+                      items:
+                        type: string
+                      type: array
+                    keyFile:
+                      description: KeyFile is an SSL key file used to secure etcd
+                        communication. Required if using a TLS connection.
+                      type: string
+                  required:
+                  - endpoints
+                  - caFile
+                  - certFile
+                  - keyFile
+                  type: object
+                local:
+                  description: Local provides configuration knobs for configuring
+                    the local etcd instance Local and External are mutually exclusive
+                  properties:
+                    dataDir:
+                      description: DataDir is the directory etcd will place its data.
+                        Defaults to "/var/lib/etcd".
+                      type: string
+                    extraArgs:
+                      description: ExtraArgs are extra arguments provided to the etcd
+                        binary when run inside a static pod.
+                      type: object
+                    imageRepository:
+                      description: ImageRepository sets the container registry to
+                        pull images from. if not set, the ImageRepository defined
+                        in ClusterConfiguration will be used instead.
+                      type: string
+                    imageTag:
+                      description: ImageTag allows to specify a tag for the image.
+                        In case this value is set, kubeadm does not change automatically
+                        the version of the above components during upgrades.
+                      type: string
+                    peerCertSANs:
+                      description: PeerCertSANs sets extra Subject Alternative Names
+                        for the etcd peer signing cert.
+                      items:
+                        type: string
+                      type: array
+                    serverCertSANs:
+                      description: ServerCertSANs sets extra Subject Alternative Names
+                        for the etcd server signing cert.
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - dataDir
+                  type: object
+              type: object
+            featureGates:
+              description: FeatureGates enabled by the user.
+              type: object
+            imageRepository:
+              description: ImageRepository sets the container registry to pull images
+                from. If empty, `k8s.gcr.io` will be used by default; in case of kubernetes
+                version is a CI build (kubernetes version starts with `ci/` or `ci-cross/`)
+                `gcr.io/kubernetes-ci-images` will be used as a default for control
+                plane components and for kube-proxy, while `k8s.gcr.io` will be used
+                for all the other images.
+              type: string
+            kind:
+              description: 'Kind is a string value representing the REST resource
+                this object represents. Servers may infer this from the endpoint the
+                client submits requests to. Cannot be updated. In CamelCase. More
+                info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+              type: string
+            kubernetesVersion:
+              description: KubernetesVersion is the target version of the control
+                plane.
+              type: string
+            networking:
+              description: Networking holds configuration for the networking topology
+                of the cluster.
+              properties:
+                dnsDomain:
+                  description: DNSDomain is the dns domain used by k8s services. Defaults
+                    to "cluster.local".
+                  type: string
+                podSubnet:
+                  description: PodSubnet is the subnet used by pods.
+                  type: string
+                serviceSubnet:
+                  description: ServiceSubnet is the subnet used by k8s services. Defaults
+                    to "10.96.0.0/12".
+                  type: string
+              required:
+              - serviceSubnet
+              - podSubnet
+              - dnsDomain
+              type: object
+            scheduler:
+              description: Scheduler contains extra settings for the scheduler control
+                plane component
+              properties:
+                extraArgs:
+                  description: 'ExtraArgs is an extra set of flags to pass to the
+                    control plane component. TODO: This is temporary and ideally we
+                    would like to switch all components to use ComponentConfig + ConfigMaps.'
+                  type: object
+                extraVolumes:
+                  description: ExtraVolumes is an extra set of host volumes, mounted
+                    to the control plane component.
+                  items:
+                    properties:
+                      hostPath:
+                        description: HostPath is the path in the host that will be
+                          mounted inside the pod.
+                        type: string
+                      mountPath:
+                        description: MountPath is the path inside the pod where hostPath
+                          will be mounted.
+                        type: string
+                      name:
+                        description: Name of the volume inside the pod template.
+                        type: string
+                      pathType:
+                        description: PathType is the type of the HostPath.
+                        type: string
+                      readOnly:
+                        description: ReadOnly controls write access to the volume
+                        type: boolean
+                    required:
+                    - name
+                    - hostPath
+                    - mountPath
+                    type: object
+                  type: array
+              type: object
+            useHyperKubeImage:
+              description: UseHyperKubeImage controls if hyperkube should be used
+                for Kubernetes components instead of their respective separate images
+              type: boolean
+          required:
+          - etcd
+          - networking
+          - kubernetesVersion
+          - controlPlaneEndpoint
+          - dns
+          - certificatesDir
+          - imageRepository
+          type: object
+        disablePortSecurity:
+          description: DisablePortSecurity disables the port security of the network
+            created for the Kubernetes cluster, which also disables SecurityGroups
+          type: boolean
+        disableServerTags:
+          description: 'Default: True. In case of server tag errors, set to False'
+          type: boolean
+        dnsNameservers:
+          description: DNSNameservers is the list of nameservers for OpenStack Subnet
+            being created.
+          items:
+            type: string
+          type: array
+        etcdCAKeyPair:
+          description: EtcdCAKeyPair is the key pair for etcd.
+          properties:
+            cert:
+              description: base64 encoded cert and key
+              format: byte
+              type: string
+            key:
+              format: byte
+              type: string
+          type: object
+        externalNetworkId:
+          description: ExternalNetworkID is the ID of an external OpenStack Network.
+            This is necessary to get public internet to the VMs.
+          type: string
+        externalRouterIPs:
+          description: ExternalRouterIPs is an array of externalIPs on the respective
+            subnets. This is necessary if the router needs a fixed ip in a specific
+            subnet.
+          items:
+            properties:
+              fixedIP:
+                description: The FixedIP in the corresponding subnet
+                type: string
+              subnet:
+                description: The subnet in which the FixedIP is used for the Gateway
+                  of this router
+                properties:
+                  filter:
+                    description: Filters for optional network query
+                    properties:
+                      cidr:
+                        type: string
+                      description:
+                        type: string
+                      enableDhcp:
+                        type: boolean
+                      id:
+                        type: string
+                      ipVersion:
+                        format: int64
+                        type: integer
+                      ipv6AddressMode:
+                        type: string
+                      ipv6RaMode:
+                        type: string
+                      limit:
+                        format: int64
+                        type: integer
+                      marker:
+                        type: string
+                      name:
+                        type: string
+                      networkId:
+                        type: string
+                      notTags:
+                        type: string
+                      notTagsAny:
+                        type: string
+                      projectId:
+                        type: string
+                      sortDir:
+                        type: string
+                      sortKey:
+                        type: string
+                      subnetpoolId:
+                        type: string
+                      tags:
+                        type: string
+                      tagsAny:
+                        type: string
+                      tenantId:
+                        type: string
+                    type: object
+                  uuid:
+                    description: The UUID of the network. Required if you omit the
+                      port attribute.
+                    type: string
+                type: object
+            required:
+            - subnet
+            type: object
+          type: array
+        frontProxyCAKeyPair:
+          description: FrontProxyCAKeyPair is the key pair for FrontProxyKeyPair.
+          properties:
+            cert:
+              description: base64 encoded cert and key
+              format: byte
+              type: string
+            key:
+              format: byte
+              type: string
+          type: object
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        managedAPIServerLoadBalancer:
+          description: 'ManagedAPIServerLoadBalancer defines whether a LoadBalancer
+            for the APIServer should be created. If set to true the following properties
+            are mandatory: APIServerLoadBalancerFloatingIP, APIServerLoadBalancerPort'
+          type: boolean
+        managedSecurityGroups:
+          description: ManagedSecurityGroups defines that kubernetes manages the OpenStack
+            security groups for now, that means that we'll create two security groups,
+            one allowing SSH and API access from everywhere, and another one that
+            allows all traffic to/from machines belonging to that group. In the future,
+            we could make this more flexible.
+          type: boolean
+        metadata:
+          type: object
+        nodeCidr:
+          description: NodeCIDR is the OpenStack Subnet to be created. Cluster actuator
+            will create a network, a subnet with NodeCIDR, and a router connected
+            to this subnet. If you leave this empty, no network will be created.
+          type: string
+        saKeyPair:
+          description: SAKeyPair is the service account key pair.
+          properties:
+            cert:
+              description: base64 encoded cert and key
+              format: byte
+              type: string
+            key:
+              format: byte
+              type: string
+          type: object
+        tags:
+          description: Tags for all resources in cluster
+          items:
+            type: string
+          type: array
+        useOctavia:
+          description: UseOctavia is weather LoadBalancer Service is Octavia or not
+          type: boolean
+      required:
+      - cloudsSecret
+      - cloudName
+      - useOctavia
+      - managedAPIServerLoadBalancer
+      - managedSecurityGroups
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: openstackclusterproviderstatuses.openstackproviderconfig.k8s.io
+spec:
+  group: openstackproviderconfig.k8s.io
+  names:
+    kind: OpenstackClusterProviderStatus
+    plural: openstackclusterproviderstatuses
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        controlPlaneSecurityGroup:
+          description: 'ControlPlaneSecurityGroups contains all the information about
+            the OpenStack Security Group that needs to be applied to control plane
+            nodes. TODO: Maybe instead of two properties, we add a property to the
+            group?'
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            rules:
+              items:
+                properties:
+                  direction:
+                    type: string
+                  etherType:
+                    type: string
+                  name:
+                    type: string
+                  portRangeMax:
+                    format: int64
+                    type: integer
+                  portRangeMin:
+                    format: int64
+                    type: integer
+                  protocol:
+                    type: string
+                  remoteGroupID:
+                    type: string
+                  remoteIPPrefix:
+                    type: string
+                  securityGroupID:
+                    type: string
+                required:
+                - name
+                - direction
+                - etherType
+                - securityGroupID
+                - portRangeMin
+                - portRangeMax
+                - protocol
+                - remoteGroupID
+                - remoteIPPrefix
+                type: object
+              type: array
+          required:
+          - name
+          - id
+          - rules
+          type: object
+        globalSecurityGroup:
+          description: GlobalSecurityGroup contains all the information about the
+            OpenStack Security Group that needs to be applied to all nodes, both control
+            plane and worker nodes.
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            rules:
+              items:
+                properties:
+                  direction:
+                    type: string
+                  etherType:
+                    type: string
+                  name:
+                    type: string
+                  portRangeMax:
+                    format: int64
+                    type: integer
+                  portRangeMin:
+                    format: int64
+                    type: integer
+                  protocol:
+                    type: string
+                  remoteGroupID:
+                    type: string
+                  remoteIPPrefix:
+                    type: string
+                  securityGroupID:
+                    type: string
+                required:
+                - name
+                - direction
+                - etherType
+                - securityGroupID
+                - portRangeMin
+                - portRangeMax
+                - protocol
+                - remoteGroupID
+                - remoteIPPrefix
+                type: object
+              type: array
+          required:
+          - name
+          - id
+          - rules
+          type: object
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        network:
+          description: Network contains all information about the created OpenStack
+            Network. It includes Subnets and Router.
+          properties:
+            apiServerLoadBalancer:
+              description: Be careful when using APIServerLoadBalancer, because this
+                field is optional and therefore not set in all cases
+              properties:
+                id:
+                  type: string
+                internalIP:
+                  type: string
+                ip:
+                  type: string
+                name:
+                  type: string
+              required:
+              - name
+              - id
+              - ip
+              - internalIP
+              type: object
+            id:
+              type: string
+            name:
+              type: string
+            router:
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+              required:
+              - name
+              - id
+              type: object
+            subnet:
+              properties:
+                cidr:
+                  type: string
+                id:
+                  type: string
+                name:
+                  type: string
+              required:
+              - name
+              - id
+              - cidr
+              type: object
+          required:
+          - name
+          - id
+          type: object
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: openstackmachineproviderstatuses.openstackproviderconfig.k8s.io
+spec:
+  group: openstackproviderconfig.k8s.io
+  names:
+    kind: OpenstackMachineProviderStatus
+    plural: openstackmachineproviderstatuses
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: openstackproviderspecs.openstackproviderconfig.k8s.io
+spec:
+  group: openstackproviderconfig.k8s.io
+  names:
+    kind: OpenstackProviderSpec
+    plural: openstackproviderspecs
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        availabilityZone:
+          description: The availability zone from which to launch the server.
+          type: string
+        cloudName:
+          description: The name of the cloud to use from the clouds secret
+          type: string
+        cloudsSecret:
+          description: The name of the secret containing the openstack credentials
+          type: object
+        configDrive:
+          description: Config Drive support
+          type: boolean
+        flavor:
+          description: The flavor reference for the flavor for your server instance.
+          type: string
+        floatingIP:
+          description: The floatingIP which will be associated to the machine, only
+            used for master. The floatingIP should have been created and haven't been
+            associated.
+          type: string
+        image:
+          description: The name of the image to use for your server instance. If the
+            RootVolume is specified, this will be ignored and use rootVolume directly.
+          type: string
+        keyName:
+          description: The ssh key to inject in the instance
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        kubeadmConfiguration:
+          description: KubeadmConfiguration holds the kubeadm configuration options
+          properties:
+            init:
+              description: InitConfiguration is used to customize any kubeadm init
+                configuration parameters.
+              properties:
+                apiVersion:
+                  description: 'APIVersion defines the versioned schema of this representation
+                    of an object. Servers should convert recognized schemas to the
+                    latest internal value, and may reject unrecognized values. More
+                    info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+                  type: string
+                bootstrapTokens:
+                  description: BootstrapTokens is respected at `kubeadm init` time
+                    and describes a set of Bootstrap Tokens to create. This information
+                    IS NOT uploaded to the kubeadm cluster configmap, partly because
+                    of its sensitive nature
+                  items:
+                    properties:
+                      description:
+                        description: Description sets a human-friendly message why
+                          this token exists and what it's used for, so other administrators
+                          can know its purpose.
+                        type: string
+                      expires:
+                        description: Expires specifies the timestamp when this token
+                          expires. Defaults to being set dynamically at runtime based
+                          on the TTL. Expires and TTL are mutually exclusive.
+                        format: date-time
+                        type: string
+                      groups:
+                        description: Groups specifies the extra groups that this token
+                          will authenticate as when/if used for authentication
+                        items:
+                          type: string
+                        type: array
+                      token:
+                        description: Token is used for establishing bidirectional
+                          trust between nodes and masters. Used for joining nodes
+                          in the cluster.
+                        type: object
+                      ttl:
+                        description: TTL defines the time to live for this token.
+                          Defaults to 24h. Expires and TTL are mutually exclusive.
+                        type: string
+                      usages:
+                        description: Usages describes the ways in which this token
+                          can be used. Can by default be used for establishing bidirectional
+                          trust, but that can be changed here.
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - token
+                    type: object
+                  type: array
+                kind:
+                  description: 'Kind is a string value representing the REST resource
+                    this object represents. Servers may infer this from the endpoint
+                    the client submits requests to. Cannot be updated. In CamelCase.
+                    More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+                  type: string
+                localAPIEndpoint:
+                  description: LocalAPIEndpoint represents the endpoint of the API
+                    server instance that's deployed on this control plane node In
+                    HA setups, this differs from ClusterConfiguration.ControlPlaneEndpoint
+                    in the sense that ControlPlaneEndpoint is the global endpoint
+                    for the cluster, which then loadbalances the requests to each
+                    individual API server. This configuration object lets you customize
+                    what IP/DNS name and port the local API server advertises it's
+                    accessible on. By default, kubeadm tries to auto-detect the IP
+                    of the default interface and use that, but in case that process
+                    fails you may set the desired value here.
+                  properties:
+                    advertiseAddress:
+                      description: AdvertiseAddress sets the IP address for the API
+                        server to advertise.
+                      type: string
+                    bindPort:
+                      description: BindPort sets the secure port for the API Server
+                        to bind to. Defaults to 6443.
+                      format: int32
+                      type: integer
+                  required:
+                  - advertiseAddress
+                  - bindPort
+                  type: object
+                nodeRegistration:
+                  description: NodeRegistration holds fields that relate to registering
+                    the new master node to the cluster
+                  properties:
+                    criSocket:
+                      description: CRISocket is used to retrieve container runtime
+                        info. This information will be annotated to the Node API object,
+                        for later re-use
+                      type: string
+                    kubeletExtraArgs:
+                      description: KubeletExtraArgs passes through extra arguments
+                        to the kubelet. The arguments here are passed to the kubelet
+                        command line via the environment file kubeadm writes at runtime
+                        for the kubelet to source. This overrides the generic base-level
+                        configuration in the kubelet-config-1.X ConfigMap Flags have
+                        higher priority when parsing. These values are local and specific
+                        to the node kubeadm is executing on.
+                      type: object
+                    name:
+                      description: Name is the `.Metadata.Name` field of the Node
+                        API object that will be created in this `kubeadm init` or
+                        `kubeadm joiń` operation. This field is also used in the CommonName
+                        field of the kubelet's client certificate to the API server.
+                        Defaults to the hostname of the node if not provided.
+                      type: string
+                    taints:
+                      description: 'Taints specifies the taints the Node API object
+                        should be registered with. If this field is unset, i.e. nil,
+                        in the `kubeadm init` process it will be defaulted to []v1.Taint{''node-role.kubernetes.io/master=""''}.
+                        If you don''t want to taint your master node, set this field
+                        to an empty slice, i.e. `taints: {}` in the YAML file. This
+                        field is solely used for Node registration.'
+                      items:
+                        type: object
+                      type: array
+                  type: object
+              type: object
+            join:
+              description: JoinConfiguration is used to customize any kubeadm join
+                configuration parameters.
+              properties:
+                apiVersion:
+                  description: 'APIVersion defines the versioned schema of this representation
+                    of an object. Servers should convert recognized schemas to the
+                    latest internal value, and may reject unrecognized values. More
+                    info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+                  type: string
+                caCertPath:
+                  description: CACertPath is the path to the SSL certificate authority
+                    used to secure comunications between node and master. Defaults
+                    to "/etc/kubernetes/pki/ca.crt".
+                  type: string
+                controlPlane:
+                  description: ControlPlane defines the additional control plane instance
+                    to be deployed on the joining node. If nil, no additional control
+                    plane instance will be deployed.
+                  properties:
+                    localAPIEndpoint:
+                      description: LocalAPIEndpoint represents the endpoint of the
+                        API server instance to be deployed on this node.
+                      properties:
+                        advertiseAddress:
+                          description: AdvertiseAddress sets the IP address for the
+                            API server to advertise.
+                          type: string
+                        bindPort:
+                          description: BindPort sets the secure port for the API Server
+                            to bind to. Defaults to 6443.
+                          format: int32
+                          type: integer
+                      required:
+                      - advertiseAddress
+                      - bindPort
+                      type: object
+                  type: object
+                discovery:
+                  description: Discovery specifies the options for the kubelet to
+                    use during the TLS Bootstrap process
+                  properties:
+                    bootstrapToken:
+                      description: BootstrapToken is used to set the options for bootstrap
+                        token based discovery BootstrapToken and File are mutually
+                        exclusive
+                      properties:
+                        apiServerEndpoint:
+                          description: APIServerEndpoint is an IP or domain name to
+                            the API server from which info will be fetched.
+                          type: string
+                        caCertHashes:
+                          description: 'CACertHashes specifies a set of public key
+                            pins to verify when token-based discovery is used. The
+                            root CA found during discovery must match one of these
+                            values. Specifying an empty set disables root CA pinning,
+                            which can be unsafe. Each hash is specified as "<type>:<value>",
+                            where the only currently supported type is "sha256". This
+                            is a hex-encoded SHA-256 hash of the Subject Public Key
+                            Info (SPKI) object in DER-encoded ASN.1. These hashes
+                            can be calculated using, for example, OpenSSL: openssl
+                            x509 -pubkey -in ca.crt openssl rsa -pubin -outform der
+                            2>&/dev/null | openssl dgst -sha256 -hex'
+                          items:
+                            type: string
+                          type: array
+                        token:
+                          description: Token is a token used to validate cluster information
+                            fetched from the master.
+                          type: string
+                        unsafeSkipCAVerification:
+                          description: UnsafeSkipCAVerification allows token-based
+                            discovery without CA verification via CACertHashes. This
+                            can weaken the security of kubeadm since other nodes can
+                            impersonate the master.
+                          type: boolean
+                      required:
+                      - token
+                      - unsafeSkipCAVerification
+                      type: object
+                    file:
+                      description: File is used to specify a file or URL to a kubeconfig
+                        file from which to load cluster information BootstrapToken
+                        and File are mutually exclusive
+                      properties:
+                        kubeConfigPath:
+                          description: KubeConfigPath is used to specify the actual
+                            file path or URL to the kubeconfig file from which to
+                            load cluster information
+                          type: string
+                      required:
+                      - kubeConfigPath
+                      type: object
+                    timeout:
+                      description: Timeout modifies the discovery timeout
+                      type: string
+                    tlsBootstrapToken:
+                      description: TLSBootstrapToken is a token used for TLS bootstrapping.
+                        If .BootstrapToken is set, this field is defaulted to .BootstrapToken.Token,
+                        but can be overridden. If .File is set, this field **must
+                        be set** in case the KubeConfigFile does not contain any other
+                        authentication information
+                      type: string
+                  required:
+                  - tlsBootstrapToken
+                  type: object
+                kind:
+                  description: 'Kind is a string value representing the REST resource
+                    this object represents. Servers may infer this from the endpoint
+                    the client submits requests to. Cannot be updated. In CamelCase.
+                    More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+                  type: string
+                nodeRegistration:
+                  description: NodeRegistration holds fields that relate to registering
+                    the new master node to the cluster
+                  properties:
+                    criSocket:
+                      description: CRISocket is used to retrieve container runtime
+                        info. This information will be annotated to the Node API object,
+                        for later re-use
+                      type: string
+                    kubeletExtraArgs:
+                      description: KubeletExtraArgs passes through extra arguments
+                        to the kubelet. The arguments here are passed to the kubelet
+                        command line via the environment file kubeadm writes at runtime
+                        for the kubelet to source. This overrides the generic base-level
+                        configuration in the kubelet-config-1.X ConfigMap Flags have
+                        higher priority when parsing. These values are local and specific
+                        to the node kubeadm is executing on.
+                      type: object
+                    name:
+                      description: Name is the `.Metadata.Name` field of the Node
+                        API object that will be created in this `kubeadm init` or
+                        `kubeadm joiń` operation. This field is also used in the CommonName
+                        field of the kubelet's client certificate to the API server.
+                        Defaults to the hostname of the node if not provided.
+                      type: string
+                    taints:
+                      description: 'Taints specifies the taints the Node API object
+                        should be registered with. If this field is unset, i.e. nil,
+                        in the `kubeadm init` process it will be defaulted to []v1.Taint{''node-role.kubernetes.io/master=""''}.
+                        If you don''t want to taint your master node, set this field
+                        to an empty slice, i.e. `taints: {}` in the YAML file. This
+                        field is solely used for Node registration.'
+                      items:
+                        type: object
+                      type: array
+                  type: object
+              required:
+              - nodeRegistration
+              - caCertPath
+              - discovery
+              type: object
+          type: object
+        metadata:
+          type: object
+        networks:
+          description: A networks object. Required parameter when there are multiple
+            networks defined for the tenant. When you do not specify the networks
+            parameter, the server attaches to the only network created for the current
+            tenant.
+          items:
+            properties:
+              filter:
+                description: Filters for optional network query
+                properties:
+                  adminStateUp:
+                    type: boolean
+                  description:
+                    type: string
+                  id:
+                    type: string
+                  limit:
+                    format: int64
+                    type: integer
+                  marker:
+                    type: string
+                  name:
+                    type: string
+                  notTags:
+                    type: string
+                  notTagsAny:
+                    type: string
+                  projectId:
+                    type: string
+                  shared:
+                    type: boolean
+                  sortDir:
+                    type: string
+                  sortKey:
+                    type: string
+                  status:
+                    type: string
+                  tags:
+                    type: string
+                  tagsAny:
+                    type: string
+                  tenantId:
+                    type: string
+                type: object
+              fixedIp:
+                description: A fixed IPv4 address for the NIC.
+                type: string
+              subnets:
+                description: Subnet within a network to use
+                items:
+                  properties:
+                    filter:
+                      description: Filters for optional network query
+                      properties:
+                        cidr:
+                          type: string
+                        description:
+                          type: string
+                        enableDhcp:
+                          type: boolean
+                        id:
+                          type: string
+                        ipVersion:
+                          format: int64
+                          type: integer
+                        ipv6AddressMode:
+                          type: string
+                        ipv6RaMode:
+                          type: string
+                        limit:
+                          format: int64
+                          type: integer
+                        marker:
+                          type: string
+                        name:
+                          type: string
+                        networkId:
+                          type: string
+                        notTags:
+                          type: string
+                        notTagsAny:
+                          type: string
+                        projectId:
+                          type: string
+                        sortDir:
+                          type: string
+                        sortKey:
+                          type: string
+                        subnetpoolId:
+                          type: string
+                        tags:
+                          type: string
+                        tagsAny:
+                          type: string
+                        tenantId:
+                          type: string
+                      type: object
+                    uuid:
+                      description: The UUID of the network. Required if you omit the
+                        port attribute.
+                      type: string
+                  type: object
+                type: array
+              uuid:
+                description: The UUID of the network. Required if you omit the port
+                  attribute.
+                type: string
+            type: object
+          type: array
+        rootVolume:
+          description: The volume metadata to boot from
+          properties:
+            deviceType:
+              type: string
+            diskSize:
+              format: int64
+              type: integer
+            sourceType:
+              type: string
+            sourceUUID:
+              type: string
+          required:
+          - deviceType
+          type: object
+        securityGroups:
+          description: The names of the security groups to assign to the instance
+          items:
+            properties:
+              filter:
+                description: Filters used to query security groups in openstack
+                properties:
+                  description:
+                    type: string
+                  id:
+                    type: string
+                  limit:
+                    format: int64
+                    type: integer
+                  marker:
+                    type: string
+                  name:
+                    type: string
+                  notTags:
+                    type: string
+                  notTagsAny:
+                    type: string
+                  projectId:
+                    type: string
+                  sortDir:
+                    type: string
+                  sortKey:
+                    type: string
+                  tags:
+                    type: string
+                  tagsAny:
+                    type: string
+                  tenantId:
+                    type: string
+                type: object
+              name:
+                description: Security Group name
+                type: string
+              uuid:
+                description: Security Group UID
+                type: string
+            type: object
+          type: array
+        serverMetadata:
+          description: Metadata mapping. Allows you to create a map of key value pairs
+            to add to the server instance.
+          type: object
+        tags:
+          description: Machine tags Requires Nova api 2.52 minimum!
+          items:
+            type: string
+          type: array
+        trunk:
+          description: Whether the server instance is created on a trunk port or not.
+          type: boolean
+        userDataSecret:
+          description: The name of the secret containing the user data (startup script
+            in most cases)
+          type: object
+      required:
+      - cloudsSecret
+      - cloudName
+      - flavor
+      - image
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: openstack-provider-manager-secrets
+  namespace: kube-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: openstack-provider-manager-role
+rules:
+- apiGroups:
+  - openstackproviderconfig.k8s.io
+  resources:
+  - openstackmachineproviderconfigs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - cluster.k8s.io
+  resources:
+  - clusters
+  - clusters/status
+  - machinedeployments
+  - machinesets
+  - machines
+  - machines/status
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openstack-provider-manager-secrets-binding
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openstack-provider-manager-secrets
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: openstack-provider-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  name: openstack-provider-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: openstack-provider-manager-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: openstack-provider-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    control-plane: controller-manager
+    controller-tools.k8s.io: "1.0"
+  name: openstack-provider-controller-manager-service
+  namespace: openstack-provider-system
+spec:
+  ports:
+  - port: 443
+  selector:
+    control-plane: controller-manager
+    controller-tools.k8s.io: "1.0"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    control-plane: controller-manager
+    controller-tools.k8s.io: "1.0"
+  name: clusterapi-controllers
+  namespace: openstack-provider-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+      controller-tools.k8s.io: "1.0"
+  serviceName: openstack-provider-controller-manager-service
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+        controller-tools.k8s.io: "1.0"
+    spec:
+      containers:
+      - env:
+        - name: USER
+          value: root
+        - name: OS_CLOUD
+          valueFrom:
+            secretKeyRef:
+              key: OS_CLOUD
+              name: cloud-selector
+        image: k8scloudprovider/openstack-cluster-api-controller:latest
+        name: openstack-machine-controller
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        volumeMounts:
+        - mountPath: /etc/kubernetes
+          name: config
+        - mountPath: /etc/openstack
+          name: cloud-config
+        - mountPath: /usr/bin/kubeadm
+          name: kubeadm
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+      volumes:
+      - hostPath:
+          path: /etc/kubernetes
+        name: config
+      - name: cloud-config
+        secret:
+          secretName: cloud-config
+      - hostPath:
+          path: /usr/bin/kubeadm
+        name: kubeadm
+---
+apiVersion: v1
+data:
+  cacert: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURBVENDQWVtZ0F3SUJBZ0lRYWJBS0pIeitDb0tUSjRiVCtFN0Y1akFOQmdrcWhraUc5dzBCQVFzRkFEQWEKTVJnd0ZnWURWUVFERXc4eE9USXVNVFk0TGpFeE1pNHlNREF3SGhjTk1Ua3dPVEV4TVRnek9USTNXaGNOTWprdwpPVEE0TVRnek9USTNXakFhTVJnd0ZnWURWUVFERXc4eE9USXVNVFk0TGpFeE1pNHlNREF3Z2dFaU1BMEdDU3FHClNJYjNEUUVCQVFVQUE0SUJEd0F3Z2dFS0FvSUJBUURWWWFyUm1YaVAwWlZKQU5NWVBVMExLdXpvUU9hZ1dPd3MKejVPUHMyRVA4bm83MFBzQk0rUmFZVjVhZW9ON2ZPQkRuN3dxSmhCaUd4am16REwya1FweWZZWGQ2NEd3c0RJQwpxUkFSODRWcUhFTVpsU1NhRkUvenBXcXRBY25URTNoSHRweFVGRzhGYmVnL1pBK3JEMnQwYzd1dWtqMkIyUEVXCndxcmRPU1V2Q0ozRmRKaGNkNC9aODNGaWFMS1p3VlVqWW1zWHltVGVYNWpMbThzQUxBcjJ1aURXTXhSRWVBSHAKSHVyci90NWlNbVQ5NnZOejl3aDltZ0RmZEp5N3dHeldLT3lzYWRDZnFwOTJidXBmaC93OFY1REVWWCt2T1FDbQpzU0FBZXhydXVBUUVxeWxUeW8rUGp3b0tuazlCOU1ONXVRdXpRRFZVYzYwRjlPV2JjTWlWQWdNQkFBR2pRekJCCk1EOEdBMVVkRVFRNE1EYUNLR3RsZVhOMGIyNWxMV0Z3YVM1dmNHVnVjM1JoWTJzdWMzWmpMbU5zZFhOMFpYSXUKYkc5allXeUhCTUNvY01pSEJNQ29iNkF3RFFZSktvWklodmNOQVFFTEJRQURnZ0VCQUk0ZEVsTGtQTklRUVRINApDUmZsNUlESFU0OHZFM21ENGc1bzNrQUlhQnYvbVBKUXNWNDl3UmU3c1FCUG5maDlJT2ZneEhrSHI5UE5nNndFClY3RTFncFZYcEJWcTNodkJjY0hXaHR4c01JbzMyYkdzenRYdExBdzJVVytiNURhL2lNMUdSVnNHWG1WRkptbzEKYTBBWjBSbG5DRVh4U3VyVyt0c0NUUHI2Si9WWXcrZjRrbEZKZm9UY1lzUkxxSEJiUzczL29nZ0JtY1NkSmg2eQpleFljNlREM2JzUHdxcUtrYUNNYjd4MUJtekxRT0xENG1QL3lydDBYb0NpLzZQK0RLT2l4TTlKdVRkcEZRQnl4ClhISytnYjNSTDRYREFvdjAwL1dUeTFSY2oyWENlelZadnh6SDZUL1FLa3IzK1JIRHpucDVOY1VnWmpZTCtGM0YKdlV2RVRHND0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQoKCg==
+  clouds.yaml: Y2xvdWRzOgogIG9wZW5zdGFjazoKICAgIGF1dGg6CiAgICAgIGF1dGhfdXJsOiAiaHR0cHM6Ly8xOTIuMTY4LjExMi4yMDA6NTAwMCIKICAgICAgdXNlcm5hbWU6ICJhZG1pbiIKICAgICAgcGFzc3dvcmQ6ICJwYXNzd29yZCIKICAgICAgcHJvamVjdF9pZDogZjJlODYzNTBiYzQxNDUzNDgxZmYxNTc0NTUwYTQxMzIKICAgICAgZG9tYWluX25hbWU6ICJkZWZhdWx0IgogICAgICB1c2VyX2RvbWFpbl9uYW1lOiAiZGVmYXVsdCIKICAgIHJlZ2lvbl9uYW1lOiAiUmVnaW9uT25lIgogICAgaW50ZXJmYWNlOiAicHVibGljIgogICAgaWRlbnRpdHlfYXBpX3ZlcnNpb246IDMKICAgIHZlcmlmeTogZmFsc2UKICAgIGNhY2VydDogLi92aW8ucGVtCg==
+kind: Secret
+metadata:
+  name: cloud-config
+  namespace: openstack-provider-system
+type: Opaque
+---
+apiVersion: v1
+data:
+  OS_CLOUD: b3BlbnN0YWNr
+kind: Secret
+metadata:
+  name: cloud-selector
+  namespace: openstack-provider-system
+type: Opaque
+---
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: system
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: clusters.cluster.k8s.io
+spec:
+  group: cluster.k8s.io
+  names:
+    kind: Cluster
+    plural: clusters
+    shortNames:
+    - cl
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            clusterNetwork:
+              description: Cluster network configuration
+              properties:
+                pods:
+                  description: The network ranges from which Pod networks are allocated.
+                  properties:
+                    cidrBlocks:
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - cidrBlocks
+                  type: object
+                serviceDomain:
+                  description: Domain name for services.
+                  type: string
+                services:
+                  description: The network ranges from which service VIPs are allocated.
+                  properties:
+                    cidrBlocks:
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - cidrBlocks
+                  type: object
+              required:
+              - services
+              - pods
+              - serviceDomain
+              type: object
+            providerSpec:
+              description: Provider-specific serialized configuration to use during
+                cluster creation. It is recommended that providers maintain their
+                own versioned API types that should be serialized/deserialized from
+                this field.
+              properties:
+                value:
+                  description: Value is an inlined, serialized representation of the
+                    resource configuration. It is recommended that providers maintain
+                    their own versioned API types that should be serialized/deserialized
+                    from this field, akin to component config.
+                  type: object
+                valueFrom:
+                  description: Source for the provider configuration. Cannot be used
+                    if value is not empty.
+                  properties:
+                    machineClass:
+                      description: The machine class from which the provider config
+                        should be sourced.
+                      properties:
+                        provider:
+                          description: Provider is the name of the cloud-provider
+                            which MachineClass is intended for.
+                          type: string
+                      type: object
+                  type: object
+              type: object
+          required:
+          - clusterNetwork
+          type: object
+        status:
+          properties:
+            apiEndpoints:
+              description: APIEndpoint represents the endpoint to communicate with
+                the IP.
+              items:
+                properties:
+                  host:
+                    description: The hostname on which the API server is serving.
+                    type: string
+                  port:
+                    description: The port on which the API server is serving.
+                    format: int64
+                    type: integer
+                required:
+                - host
+                - port
+                type: object
+              type: array
+            errorMessage:
+              description: If set, indicates that there is a problem reconciling the
+                state, and will be set to a descriptive error message.
+              type: string
+            errorReason:
+              description: If set, indicates that there is a problem reconciling the
+                state, and will be set to a token value suitable for programmatic
+                interpretation.
+              type: string
+            providerStatus:
+              description: Provider-specific status. It is recommended that providers
+                maintain their own versioned API types that should be serialized/deserialized
+                from this field.
+              type: object
+          type: object
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: machineclasses.cluster.k8s.io
+spec:
+  group: cluster.k8s.io
+  names:
+    kind: MachineClass
+    plural: machineclasses
+    shortNames:
+    - mc
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        providerSpec:
+          description: Provider-specific configuration to use during node creation.
+          type: object
+      required:
+      - providerSpec
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: machinedeployments.cluster.k8s.io
+spec:
+  group: cluster.k8s.io
+  names:
+    kind: MachineDeployment
+    plural: machinedeployments
+    shortNames:
+    - md
+  scope: Namespaced
+  subresources:
+    scale:
+      labelSelectorPath: .status.labelSelector
+      specReplicasPath: .spec.replicas
+      statusReplicasPath: .status.replicas
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            minReadySeconds:
+              description: Minimum number of seconds for which a newly created machine
+                should be ready. Defaults to 0 (machine will be considered available
+                as soon as it is ready)
+              format: int32
+              type: integer
+            paused:
+              description: Indicates that the deployment is paused.
+              type: boolean
+            progressDeadlineSeconds:
+              description: The maximum time in seconds for a deployment to make progress
+                before it is considered to be failed. The deployment controller will
+                continue to process failed deployments and a condition with a ProgressDeadlineExceeded
+                reason will be surfaced in the deployment status. Note that progress
+                will not be estimated during the time a deployment is paused. Defaults
+                to 600s.
+              format: int32
+              type: integer
+            replicas:
+              description: Number of desired machines. Defaults to 1. This is a pointer
+                to distinguish between explicit zero and not specified.
+              format: int32
+              type: integer
+            revisionHistoryLimit:
+              description: The number of old MachineSets to retain to allow rollback.
+                This is a pointer to distinguish between explicit zero and not specified.
+                Defaults to 1.
+              format: int32
+              type: integer
+            selector:
+              description: Label selector for machines. Existing MachineSets whose
+                machines are selected by this will be the ones affected by this deployment.
+                It must match the machine template's labels.
+              type: object
+            strategy:
+              description: The deployment strategy to use to replace existing machines
+                with new ones.
+              properties:
+                rollingUpdate:
+                  description: Rolling update config params. Present only if MachineDeploymentStrategyType
+                    = RollingUpdate.
+                  properties:
+                    maxSurge:
+                      anyOf:
+                      - type: string
+                      - type: integer
+                      description: 'The maximum number of machines that can be scheduled
+                        above the desired number of machines. Value can be an absolute
+                        number (ex: 5) or a percentage of desired machines (ex: 10%).
+                        This can not be 0 if MaxUnavailable is 0. Absolute number
+                        is calculated from percentage by rounding up. Defaults to
+                        1. Example: when this is set to 30%, the new MachineSet can
+                        be scaled up immediately when the rolling update starts, such
+                        that the total number of old and new machines do not exceed
+                        130% of desired machines. Once old machines have been killed,
+                        new MachineSet can be scaled up further, ensuring that total
+                        number of machines running at any time during the update is
+                        at most 130% of desired machines.'
+                    maxUnavailable:
+                      anyOf:
+                      - type: string
+                      - type: integer
+                      description: 'The maximum number of machines that can be unavailable
+                        during the update. Value can be an absolute number (ex: 5)
+                        or a percentage of desired machines (ex: 10%). Absolute number
+                        is calculated from percentage by rounding down. This can not
+                        be 0 if MaxSurge is 0. Defaults to 0. Example: when this is
+                        set to 30%, the old MachineSet can be scaled down to 70% of
+                        desired machines immediately when the rolling update starts.
+                        Once new machines are ready, old MachineSet can be scaled
+                        down further, followed by scaling up the new MachineSet, ensuring
+                        that the total number of machines available at all times during
+                        the update is at least 70% of desired machines.'
+                  type: object
+                type:
+                  description: Type of deployment. Currently the only supported strategy
+                    is "RollingUpdate". Default is RollingUpdate.
+                  type: string
+              type: object
+            template:
+              description: Template describes the machines that will be created.
+              properties:
+                metadata:
+                  description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata'
+                  type: object
+                spec:
+                  description: 'Specification of the desired behavior of the machine.
+                    More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status'
+                  properties:
+                    configSource:
+                      description: ConfigSource is used to populate in the associated
+                        Node for dynamic kubelet config. This field already exists
+                        in Node, so any updates to it in the Machine spec will be
+                        automatically copied to the linked NodeRef from the status.
+                        The rest of dynamic kubelet config support should then work
+                        as-is.
+                      type: object
+                    metadata:
+                      description: ObjectMeta will autopopulate the Node created.
+                        Use this to indicate what labels, annotations, name prefix,
+                        etc., should be used when creating the Node.
+                      type: object
+                    providerID:
+                      description: ProviderID is the identification ID of the machine
+                        provided by the provider. This field must match the provider
+                        ID as seen on the node object corresponding to this machine.
+                        This field is required by higher level consumers of cluster-api.
+                        Example use case is cluster autoscaler with cluster-api as
+                        provider. Clean-up logic in the autoscaler compares machines
+                        to nodes to find out machines at provider which could not
+                        get registered as Kubernetes nodes. With cluster-api as a
+                        generic out-of-tree provider for autoscaler, this field is
+                        required by autoscaler to be able to have a provider view
+                        of the list of machines. Another list of nodes is queried
+                        from the k8s apiserver and then a comparison is done to find
+                        out unregistered machines and are marked for delete. This
+                        field will be set by the actuators and consumed by higher
+                        level entities like autoscaler that will be interfacing with
+                        cluster-api as generic provider.
+                      type: string
+                    providerSpec:
+                      description: ProviderSpec details Provider-specific configuration
+                        to use during node creation.
+                      properties:
+                        value:
+                          description: Value is an inlined, serialized representation
+                            of the resource configuration. It is recommended that
+                            providers maintain their own versioned API types that
+                            should be serialized/deserialized from this field, akin
+                            to component config.
+                          type: object
+                        valueFrom:
+                          description: Source for the provider configuration. Cannot
+                            be used if value is not empty.
+                          properties:
+                            machineClass:
+                              description: The machine class from which the provider
+                                config should be sourced.
+                              properties:
+                                provider:
+                                  description: Provider is the name of the cloud-provider
+                                    which MachineClass is intended for.
+                                  type: string
+                              type: object
+                          type: object
+                      type: object
+                    taints:
+                      description: The list of the taints to be applied to the corresponding
+                        Node in additive manner. This list will not overwrite any
+                        other taints added to the Node on an ongoing basis by other
+                        entities. These taints should be actively reconciled e.g.
+                        if you ask the machine controller to apply a taint and then
+                        manually remove the taint the machine controller will put
+                        it back) but not have the machine controller remove any taints
+                      items:
+                        type: object
+                      type: array
+                    versions:
+                      description: Versions of key software to use. This field is
+                        optional at cluster creation time, and omitting the field
+                        indicates that the cluster installation tool should select
+                        defaults for the user. These defaults may differ based on
+                        the cluster installer, but the tool should populate the values
+                        it uses when persisting Machine objects. A Machine spec missing
+                        this field at runtime is invalid.
+                      properties:
+                        controlPlane:
+                          description: ControlPlane is the semantic version of the
+                            Kubernetes control plane to run. This should only be populated
+                            when the machine is a control plane.
+                          type: string
+                        kubelet:
+                          description: Kubelet is the semantic version of kubelet
+                            to run
+                          type: string
+                      required:
+                      - kubelet
+                      type: object
+                  required:
+                  - providerSpec
+                  type: object
+              type: object
+          required:
+          - selector
+          - template
+          type: object
+        status:
+          properties:
+            availableReplicas:
+              description: Total number of available machines (ready for at least
+                minReadySeconds) targeted by this deployment.
+              format: int32
+              type: integer
+            observedGeneration:
+              description: The generation observed by the deployment controller.
+              format: int64
+              type: integer
+            readyReplicas:
+              description: Total number of ready machines targeted by this deployment.
+              format: int32
+              type: integer
+            replicas:
+              description: Total number of non-terminated machines targeted by this
+                deployment (their labels match the selector).
+              format: int32
+              type: integer
+            unavailableReplicas:
+              description: Total number of unavailable machines targeted by this deployment.
+                This is the total number of machines that are still required for the
+                deployment to have 100% available capacity. They may either be machines
+                that are running but not yet available or machines that still have
+                not been created.
+              format: int32
+              type: integer
+            updatedReplicas:
+              description: Total number of non-terminated machines targeted by this
+                deployment that have the desired template spec.
+              format: int32
+              type: integer
+          type: object
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: machines.cluster.k8s.io
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.providerID
+    description: Provider ID
+    name: ProviderID
+    type: string
+  - JSONPath: .status.phase
+    description: Machine status such as Terminating/Pending/Running/Failed etc
+    name: Phase
+    type: string
+  - JSONPath: .status.nodeRef.name
+    description: Node name associated with this machine
+    name: NodeName
+    priority: 1
+    type: string
+  group: cluster.k8s.io
+  names:
+    kind: Machine
+    plural: machines
+    shortNames:
+    - ma
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            configSource:
+              description: ConfigSource is used to populate in the associated Node
+                for dynamic kubelet config. This field already exists in Node, so
+                any updates to it in the Machine spec will be automatically copied
+                to the linked NodeRef from the status. The rest of dynamic kubelet
+                config support should then work as-is.
+              type: object
+            metadata:
+              description: ObjectMeta will autopopulate the Node created. Use this
+                to indicate what labels, annotations, name prefix, etc., should be
+                used when creating the Node.
+              type: object
+            providerID:
+              description: ProviderID is the identification ID of the machine provided
+                by the provider. This field must match the provider ID as seen on
+                the node object corresponding to this machine. This field is required
+                by higher level consumers of cluster-api. Example use case is cluster
+                autoscaler with cluster-api as provider. Clean-up logic in the autoscaler
+                compares machines to nodes to find out machines at provider which
+                could not get registered as Kubernetes nodes. With cluster-api as
+                a generic out-of-tree provider for autoscaler, this field is required
+                by autoscaler to be able to have a provider view of the list of machines.
+                Another list of nodes is queried from the k8s apiserver and then a
+                comparison is done to find out unregistered machines and are marked
+                for delete. This field will be set by the actuators and consumed by
+                higher level entities like autoscaler that will be interfacing with
+                cluster-api as generic provider.
+              type: string
+            providerSpec:
+              description: ProviderSpec details Provider-specific configuration to
+                use during node creation.
+              properties:
+                value:
+                  description: Value is an inlined, serialized representation of the
+                    resource configuration. It is recommended that providers maintain
+                    their own versioned API types that should be serialized/deserialized
+                    from this field, akin to component config.
+                  type: object
+                valueFrom:
+                  description: Source for the provider configuration. Cannot be used
+                    if value is not empty.
+                  properties:
+                    machineClass:
+                      description: The machine class from which the provider config
+                        should be sourced.
+                      properties:
+                        provider:
+                          description: Provider is the name of the cloud-provider
+                            which MachineClass is intended for.
+                          type: string
+                      type: object
+                  type: object
+              type: object
+            taints:
+              description: The list of the taints to be applied to the corresponding
+                Node in additive manner. This list will not overwrite any other taints
+                added to the Node on an ongoing basis by other entities. These taints
+                should be actively reconciled e.g. if you ask the machine controller
+                to apply a taint and then manually remove the taint the machine controller
+                will put it back) but not have the machine controller remove any taints
+              items:
+                type: object
+              type: array
+            versions:
+              description: Versions of key software to use. This field is optional
+                at cluster creation time, and omitting the field indicates that the
+                cluster installation tool should select defaults for the user. These
+                defaults may differ based on the cluster installer, but the tool should
+                populate the values it uses when persisting Machine objects. A Machine
+                spec missing this field at runtime is invalid.
+              properties:
+                controlPlane:
+                  description: ControlPlane is the semantic version of the Kubernetes
+                    control plane to run. This should only be populated when the machine
+                    is a control plane.
+                  type: string
+                kubelet:
+                  description: Kubelet is the semantic version of kubelet to run
+                  type: string
+              required:
+              - kubelet
+              type: object
+          required:
+          - providerSpec
+          type: object
+        status:
+          properties:
+            addresses:
+              description: Addresses is a list of addresses assigned to the machine.
+                Queried from cloud provider, if available.
+              items:
+                type: object
+              type: array
+            conditions:
+              description: 'Conditions lists the conditions synced from the node conditions
+                of the corresponding node-object. Machine-controller is responsible
+                for keeping conditions up-to-date. MachineSet controller will be taking
+                these conditions as a signal to decide if machine is healthy or needs
+                to be replaced. Refer: https://kubernetes.io/docs/concepts/architecture/nodes/#condition'
+              items:
+                type: object
+              type: array
+            errorMessage:
+              description: ErrorMessage will be set in the event that there is a terminal
+                problem reconciling the Machine and will contain a more verbose string
+                suitable for logging and human consumption.  This field should not
+                be set for transitive errors that a controller faces that are expected
+                to be fixed automatically over time (like service outages), but instead
+                indicate that something is fundamentally wrong with the Machine's
+                spec or the configuration of the controller, and that manual intervention
+                is required. Examples of terminal errors would be invalid combinations
+                of settings in the spec, values that are unsupported by the controller,
+                or the responsible controller itself being critically misconfigured.  Any
+                transient errors that occur during the reconciliation of Machines
+                can be added as events to the Machine object and/or logged in the
+                controller's output.
+              type: string
+            errorReason:
+              description: ErrorReason will be set in the event that there is a terminal
+                problem reconciling the Machine and will contain a succinct value
+                suitable for machine interpretation.  This field should not be set
+                for transitive errors that a controller faces that are expected to
+                be fixed automatically over time (like service outages), but instead
+                indicate that something is fundamentally wrong with the Machine's
+                spec or the configuration of the controller, and that manual intervention
+                is required. Examples of terminal errors would be invalid combinations
+                of settings in the spec, values that are unsupported by the controller,
+                or the responsible controller itself being critically misconfigured.  Any
+                transient errors that occur during the reconciliation of Machines
+                can be added as events to the Machine object and/or logged in the
+                controller's output.
+              type: string
+            lastOperation:
+              description: LastOperation describes the last-operation performed by
+                the machine-controller. This API should be useful as a history in
+                terms of the latest operation performed on the specific machine. It
+                should also convey the state of the latest-operation for example if
+                it is still on-going, failed or completed successfully.
+              properties:
+                description:
+                  description: Description is the human-readable description of the
+                    last operation.
+                  type: string
+                lastUpdated:
+                  description: LastUpdated is the timestamp at which LastOperation
+                    API was last-updated.
+                  format: date-time
+                  type: string
+                state:
+                  description: State is the current status of the last performed operation.
+                    E.g. Processing, Failed, Successful etc
+                  type: string
+                type:
+                  description: Type is the type of operation which was last performed.
+                    E.g. Create, Delete, Update etc
+                  type: string
+              type: object
+            lastUpdated:
+              description: LastUpdated identifies when this status was last observed.
+              format: date-time
+              type: string
+            nodeRef:
+              description: NodeRef will point to the corresponding Node if it exists.
+              type: object
+            phase:
+              description: Phase represents the current phase of machine actuation.
+                E.g. Pending, Running, Terminating, Failed etc.
+              type: string
+            providerStatus:
+              description: ProviderStatus details a Provider-specific status. It is
+                recommended that providers maintain their own versioned API types
+                that should be serialized/deserialized from this field.
+              type: object
+            versions:
+              description: 'Versions specifies the current versions of software on
+                the corresponding Node (if it exists). This is provided for a few
+                reasons:  1) It is more convenient than checking the NodeRef, traversing
+                it to    the Node, and finding the appropriate field in Node.Status.NodeInfo    (which
+                uses different field names and formatting). 2) It removes some of
+                the dependency on the structure of the Node,    so that if the structure
+                of Node.Status.NodeInfo changes, only    machine controllers need
+                to be updated, rather than every client    of the Machines API. 3)
+                There is no other simple way to check the control plane    version.
+                A client would have to connect directly to the apiserver    running
+                on the target node in order to find out its version.'
+              properties:
+                controlPlane:
+                  description: ControlPlane is the semantic version of the Kubernetes
+                    control plane to run. This should only be populated when the machine
+                    is a control plane.
+                  type: string
+                kubelet:
+                  description: Kubelet is the semantic version of kubelet to run
+                  type: string
+              required:
+              - kubelet
+              type: object
+          type: object
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: machinesets.cluster.k8s.io
+spec:
+  group: cluster.k8s.io
+  names:
+    kind: MachineSet
+    plural: machinesets
+    shortNames:
+    - ms
+  scope: Namespaced
+  subresources:
+    scale:
+      labelSelectorPath: .status.labelSelector
+      specReplicasPath: .spec.replicas
+      statusReplicasPath: .status.replicas
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            deletePolicy:
+              description: DeletePolicy defines the policy used to identify nodes
+                to delete when downscaling. Defaults to "Random".  Valid values are
+                "Random, "Newest", "Oldest"
+              enum:
+              - Random
+              - Newest
+              - Oldest
+              type: string
+            minReadySeconds:
+              description: MinReadySeconds is the minimum number of seconds for which
+                a newly created machine should be ready. Defaults to 0 (machine will
+                be considered available as soon as it is ready)
+              format: int32
+              type: integer
+            replicas:
+              description: Replicas is the number of desired replicas. This is a pointer
+                to distinguish between explicit zero and unspecified. Defaults to
+                1.
+              format: int32
+              type: integer
+            selector:
+              description: 'Selector is a label query over machines that should match
+                the replica count. Label keys and values that must match in order
+                to be controlled by this MachineSet. It must match the machine template''s
+                labels. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors'
+              type: object
+            template:
+              description: Template is the object that describes the machine that
+                will be created if insufficient replicas are detected.
+              properties:
+                metadata:
+                  description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata'
+                  type: object
+                spec:
+                  description: 'Specification of the desired behavior of the machine.
+                    More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status'
+                  properties:
+                    configSource:
+                      description: ConfigSource is used to populate in the associated
+                        Node for dynamic kubelet config. This field already exists
+                        in Node, so any updates to it in the Machine spec will be
+                        automatically copied to the linked NodeRef from the status.
+                        The rest of dynamic kubelet config support should then work
+                        as-is.
+                      type: object
+                    metadata:
+                      description: ObjectMeta will autopopulate the Node created.
+                        Use this to indicate what labels, annotations, name prefix,
+                        etc., should be used when creating the Node.
+                      type: object
+                    providerID:
+                      description: ProviderID is the identification ID of the machine
+                        provided by the provider. This field must match the provider
+                        ID as seen on the node object corresponding to this machine.
+                        This field is required by higher level consumers of cluster-api.
+                        Example use case is cluster autoscaler with cluster-api as
+                        provider. Clean-up logic in the autoscaler compares machines
+                        to nodes to find out machines at provider which could not
+                        get registered as Kubernetes nodes. With cluster-api as a
+                        generic out-of-tree provider for autoscaler, this field is
+                        required by autoscaler to be able to have a provider view
+                        of the list of machines. Another list of nodes is queried
+                        from the k8s apiserver and then a comparison is done to find
+                        out unregistered machines and are marked for delete. This
+                        field will be set by the actuators and consumed by higher
+                        level entities like autoscaler that will be interfacing with
+                        cluster-api as generic provider.
+                      type: string
+                    providerSpec:
+                      description: ProviderSpec details Provider-specific configuration
+                        to use during node creation.
+                      properties:
+                        value:
+                          description: Value is an inlined, serialized representation
+                            of the resource configuration. It is recommended that
+                            providers maintain their own versioned API types that
+                            should be serialized/deserialized from this field, akin
+                            to component config.
+                          type: object
+                        valueFrom:
+                          description: Source for the provider configuration. Cannot
+                            be used if value is not empty.
+                          properties:
+                            machineClass:
+                              description: The machine class from which the provider
+                                config should be sourced.
+                              properties:
+                                provider:
+                                  description: Provider is the name of the cloud-provider
+                                    which MachineClass is intended for.
+                                  type: string
+                              type: object
+                          type: object
+                      type: object
+                    taints:
+                      description: The list of the taints to be applied to the corresponding
+                        Node in additive manner. This list will not overwrite any
+                        other taints added to the Node on an ongoing basis by other
+                        entities. These taints should be actively reconciled e.g.
+                        if you ask the machine controller to apply a taint and then
+                        manually remove the taint the machine controller will put
+                        it back) but not have the machine controller remove any taints
+                      items:
+                        type: object
+                      type: array
+                    versions:
+                      description: Versions of key software to use. This field is
+                        optional at cluster creation time, and omitting the field
+                        indicates that the cluster installation tool should select
+                        defaults for the user. These defaults may differ based on
+                        the cluster installer, but the tool should populate the values
+                        it uses when persisting Machine objects. A Machine spec missing
+                        this field at runtime is invalid.
+                      properties:
+                        controlPlane:
+                          description: ControlPlane is the semantic version of the
+                            Kubernetes control plane to run. This should only be populated
+                            when the machine is a control plane.
+                          type: string
+                        kubelet:
+                          description: Kubelet is the semantic version of kubelet
+                            to run
+                          type: string
+                      required:
+                      - kubelet
+                      type: object
+                  required:
+                  - providerSpec
+                  type: object
+              type: object
+          required:
+          - selector
+          type: object
+        status:
+          properties:
+            availableReplicas:
+              description: The number of available replicas (ready for at least minReadySeconds)
+                for this MachineSet.
+              format: int32
+              type: integer
+            errorMessage:
+              type: string
+            errorReason:
+              description: In the event that there is a terminal problem reconciling
+                the replicas, both ErrorReason and ErrorMessage will be set. ErrorReason
+                will be populated with a succinct value suitable for machine interpretation,
+                while ErrorMessage will contain a more verbose string suitable for
+                logging and human consumption.  These fields should not be set for
+                transitive errors that a controller faces that are expected to be
+                fixed automatically over time (like service outages), but instead
+                indicate that something is fundamentally wrong with the MachineTemplate's
+                spec or the configuration of the machine controller, and that manual
+                intervention is required. Examples of terminal errors would be invalid
+                combinations of settings in the spec, values that are unsupported
+                by the machine controller, or the responsible machine controller itself
+                being critically misconfigured.  Any transient errors that occur during
+                the reconciliation of Machines can be added as events to the MachineSet
+                object and/or logged in the controller's output.
+              type: string
+            fullyLabeledReplicas:
+              description: The number of replicas that have labels matching the labels
+                of the machine template of the MachineSet.
+              format: int32
+              type: integer
+            observedGeneration:
+              description: ObservedGeneration reflects the generation of the most
+                recently observed MachineSet.
+              format: int64
+              type: integer
+            readyReplicas:
+              description: The number of ready replicas for this MachineSet. A machine
+                is considered ready when the node has been created and is "Ready".
+              format: int32
+              type: integer
+            replicas:
+              description: Replicas is the most recently observed number of replicas.
+              format: int32
+              type: integer
+          required:
+          - replicas
+          type: object
+  version: v1alpha1
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - cluster.k8s.io
+  resources:
+  - clusters
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - patch
+- apiGroups:
+  - cluster.k8s.io
+  resources:
+  - machines
+  - machines/status
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - cluster.k8s.io
+  resources:
+  - machinedeployments
+  - machinedeployments/status
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - cluster.k8s.io
+  resources:
+  - machinesets
+  - machinesets/status
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - cluster.k8s.io
+  resources:
+  - machines
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - cluster.k8s.io
+  resources:
+  - machines
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  name: manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: manager-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    control-plane: controller-manager
+    controller-tools.k8s.io: "1.0"
+  name: controller-manager-service
+  namespace: system
+spec:
+  ports:
+  - port: 443
+  selector:
+    control-plane: controller-manager
+    controller-tools.k8s.io: "1.0"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    control-plane: controller-manager
+    controller-tools.k8s.io: "1.0"
+  name: controller-manager
+  namespace: system
+spec:
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+      controller-tools.k8s.io: "1.0"
+  serviceName: controller-manager-service
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+        controller-tools.k8s.io: "1.0"
+    spec:
+      containers:
+      - command:
+        - /manager
+        image: gcr.io/k8s-cluster-api/cluster-api-controller:v0.1.4
+        name: manager
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+      terminationGracePeriodSeconds: 10
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - effect: NoExecute
+        key: node.alpha.kubernetes.io/notReady
+        operator: Exists
+      - effect: NoExecute
+        key: node.alpha.kubernetes.io/unreachable
+        operator: Exists
+---
+apiVersion: v1
+data:
+  userData: IyEvdXNyL2Jpbi9lbnYgYmFzaApzZXQgLWUKc2V0IC14CigKS1VCRUxFVF9WRVJTSU9OPXt7IC5NYWNoaW5lLlNwZWMuVmVyc2lvbnMuS3ViZWxldCB9fQpWRVJTSU9OPXYke0tVQkVMRVRfVkVSU0lPTn0KTkFNRVNQQUNFPXt7IC5NYWNoaW5lLk9iamVjdE1ldGEuTmFtZXNwYWNlIH19Ck1BQ0hJTkU9JE5BTUVTUEFDRQpNQUNISU5FKz0iLyIKTUFDSElORSs9e3sgLk1hY2hpbmUuT2JqZWN0TWV0YS5OYW1lIH19CkFSQ0g9YW1kNjQKc3dhcG9mZiAtYQplY2hvICIxMjcuMC4wLjEgJChob3N0bmFtZSkiICA+PiAvZXRjL2hvc3RzCiMgZGlzYWJsZSBzd2FwIGluIGZzdGFiCnNlZCAtaS5iYWsgLXIgJ3MvKC4rIHN3YXAgLispLyNcMS8nIC9ldGMvZnN0YWIKY3VybCAtcyBodHRwczovL3BhY2thZ2VzLmNsb3VkLmdvb2dsZS5jb20vYXB0L2RvYy9hcHQta2V5LmdwZyB8IHN1ZG8gYXB0LWtleSBhZGQgLQp0b3VjaCAvZXRjL2FwdC9zb3VyY2VzLmxpc3QuZC9rdWJlcm5ldGVzLmxpc3QKc2ggLWMgJ2VjaG8gImRlYiBodHRwOi8vYXB0Lmt1YmVybmV0ZXMuaW8vIGt1YmVybmV0ZXMteGVuaWFsIG1haW4iID4gL2V0Yy9hcHQvc291cmNlcy5saXN0LmQva3ViZXJuZXRlcy5saXN0JwphcHQtZ2V0IHVwZGF0ZSAteQphcHQtZ2V0IGluc3RhbGwgLXkgXAogICAgcHJpcHMKCiMgR2V0dGluZyBsb2NhbCBpcCBmcm9tIHRoZSBtZXRhZGF0YSBvZiB0aGUgbm9kZS4KZWNobyAiR2V0dGluZyBsb2NhbCBpcCBmcm9tIG1ldGFkYXRhIgpmb3IgaSBpbiAkKHNlcSA2MCk7IGRvCiAgICBlY2hvICJ0cnlpbmcgdG8gZ2V0IGxvY2FsLWlwdjQgJGkgLyA2MCIKICAgIE9QRU5TVEFDS19JUFY0X0xPQ0FMPSQoY3VybCAtLWZhaWwgLXMgaHR0cDovLzE2OS4yNTQuMTY5LjI1NC9sYXRlc3QvbWV0YS1kYXRhL2xvY2FsLWlwdjQpCiAgICBpZiBbWyAkPyA9PSAwIF1dICYmIFtbIC1uICIkT1BFTlNUQUNLX0lQVjRfTE9DQUwiIF1dOyB0aGVuCiAgICAgICAgYnJlYWsKICAgIGZpCiAgICBzbGVlcCAxCmRvbmUKCmZ1bmN0aW9uIGluc3RhbGxfY29uZmlndXJlX2RvY2tlciAoKSB7CiAgICAjIHByZXZlbnQgZG9ja2VyIGZyb20gYXV0by1zdGFydGluZwogICAgZWNobyAiZXhpdCAxMDEiID4gL3Vzci9zYmluL3BvbGljeS1yYy5kCiAgICBjaG1vZCAreCAvdXNyL3NiaW4vcG9saWN5LXJjLmQKICAgIHRyYXAgInJtIC91c3Ivc2Jpbi9wb2xpY3ktcmMuZCIgUkVUVVJOCiAgICBhcHQtZ2V0IGluc3RhbGwgLXkgZG9ja2VyLmlvCiAgICBlY2hvICdET0NLRVJfT1BUUz0iLS1pcHRhYmxlcz1mYWxzZSAtLWlwLW1hc3E9ZmFsc2UiJyA+IC9ldGMvZGVmYXVsdC9kb2NrZXIKCiAgICAjIFJlc2V0IGlwdGFibGVzIGNvbmZpZwogICAgbWtkaXIgLXAgL2V0Yy9zeXN0ZW1kL3N5c3RlbS9kb2NrZXIuc2VydmljZS5kCiAgICBjYXQgPiAvZXRjL3N5c3RlbWQvc3lzdGVtL2RvY2tlci5zZXJ2aWNlLmQvMTAtaXB0YWJsZXMuY29uZiA8PEVPRgpbU2VydmljZV0KRW52aXJvbm1lbnRGaWxlPS9ldGMvZGVmYXVsdC9kb2NrZXIKRXhlY1N0YXJ0PQpFeGVjU3RhcnQ9L3Vzci9iaW4vZG9ja2VyZCAtSCBmZDovLyBcJERPQ0tFUl9PUFRTCkVPRgoKICAgIHN5c3RlbWN0bCBkYWVtb24tcmVsb2FkCiAgICBzeXN0ZW1jdGwgZW5hYmxlIGRvY2tlcgogICAgc3lzdGVtY3RsIHN0YXJ0IGRvY2tlcgp9Cmluc3RhbGxfY29uZmlndXJlX2RvY2tlcgoKY3VybCAtc1NMIGh0dHBzOi8vZGwuazhzLmlvL3JlbGVhc2UvJHtWRVJTSU9OfS9iaW4vbGludXgvJHtBUkNIfS9rdWJlYWRtID4gL3Vzci9iaW4va3ViZWFkbS5kbApjaG1vZCBhK3J4IC91c3IvYmluL2t1YmVhZG0uZGwKCiMgT3VyIERlYmlhbiBwYWNrYWdlcyBoYXZlIHZlcnNpb25zIGxpa2UgIjEuOC4wLTAwIiBvciAiMS44LjAtMDEiLiBEbyBhIHByZWZpeAojIHNlYXJjaCBiYXNlZCBvbiBvdXIgU2VtVmVyIHRvIGZpbmQgdGhlIHJpZ2h0IChuZXdlc3QpIHBhY2thZ2UgdmVyc2lvbi4KZnVuY3Rpb24gZ2V0dmVyc2lvbigpIHsKICAgIG5hbWU9JDEKICAgIHByZWZpeD0kMgogICAgdmVyc2lvbj0kKGFwdC1jYWNoZSBtYWRpc29uICRuYW1lIHwgYXdrICd7IHByaW50ICQzIH0nIHwgZ3JlcCBeJHByZWZpeCB8IGhlYWQgLW4xKQogICAgaWYgW1sgLXogIiR2ZXJzaW9uIiBdXTsgdGhlbgogICAgICAgIGVjaG8gQ2FuXCd0IGZpbmQgcGFja2FnZSAkbmFtZSB3aXRoIHByZWZpeCAkcHJlZml4CiAgICAgICAgZXhpdCAxCiAgICBmaQogICAgZWNobyAkdmVyc2lvbgp9CktVQkVMRVQ9JChnZXR2ZXJzaW9uIGt1YmVsZXQgJHtLVUJFTEVUX1ZFUlNJT059LSkKS1VCRUFETT0kKGdldHZlcnNpb24ga3ViZWFkbSAke0tVQkVMRVRfVkVSU0lPTn0tKQpLVUJFQ1RMPSQoZ2V0dmVyc2lvbiBrdWJlY3RsICR7S1VCRUxFVF9WRVJTSU9OfS0pCmFwdC1nZXQgaW5zdGFsbCAteSBcCiAgICBrdWJlbGV0PSR7S1VCRUxFVH0gXAogICAga3ViZWFkbT0ke0tVQkVBRE19IFwKICAgIGt1YmVjdGw9JHtLVUJFQ1RMfQoKbXYgL3Vzci9iaW4va3ViZWFkbS5kbCAvdXNyL2Jpbi9rdWJlYWRtCmNobW9kIGErcnggL3Vzci9iaW4va3ViZWFkbQoKZWNobyBXMGRzYjJKaGJGMEtZWFYwYUMxMWNtdzlhSFIwY0hNNkx5OHhPVEl1TVRZNExqRXhNaTR5TURBNk5UQXdNQXAxYzJWeWJtRnRaVDBpWVdSdGFXNGlDbkJoYzNOM2IzSmtQU0p3WVhOemQyOXlaQ0lLY21WbmFXOXVQU0pTWldkcGIyNVBibVVpQ25SbGJtRnVkQzFwWkQwaVpqSmxPRFl6TlRCaVl6UXhORFV6TkRneFptWXhOVGMwTlRVd1lUUXhNeklpQ21SdmJXRnBiaTF1WVcxbFBTSmtaV1poZFd4MElnb0tJQ0JqWVMxbWFXeGxQU0l2WlhSakwyTmxjblJ6TDJOaFkyVnlkQ0lLSUNBSyB8IGJhc2U2NCAtZCA+IC9ldGMva3ViZXJuZXRlcy9jbG91ZC5jb25mCmNobW9kIDYwMCAvZXRjL2t1YmVybmV0ZXMvY2xvdWQuY29uZgpta2RpciAvZXRjL2NlcnRzCmVjaG8gTFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVUkJWRU5EUVdWdFowRjNTVUpCWjBsUllXSkJTMHBJZWl0RGIwdFVTalJpVkN0Rk4wWTFha0ZPUW1kcmNXaHJhVWM1ZHpCQ1FWRnpSa0ZFUVdFS1RWSm5kMFpuV1VSV1VWRkVSWGM0ZUU5VVNYVk5WRmswVEdwRmVFMXBOSGxOUkVGM1NHaGpUazFVYTNkUFZFVjRUVlJuZWs5VVNUTlhhR05PVFdwcmR3cFBWRUUwVFZSbmVrOVVTVE5YYWtGaFRWSm5kMFpuV1VSV1VWRkVSWGM0ZUU5VVNYVk5WRmswVEdwRmVFMXBOSGxOUkVGM1oyZEZhVTFCTUVkRFUzRkhDbE5KWWpORVVVVkNRVkZWUVVFMFNVSkVkMEYzWjJkRlMwRnZTVUpCVVVSV1dXRnlVbTFZYVZBd1dsWktRVTVOV1ZCVk1FeExkWHB2VVU5aFoxZFBkM01LZWpWUFVITXlSVkE0Ym04M01GQnpRazByVW1GWlZqVmhaVzlPTjJaUFFrUnVOM2R4U21oQ2FVZDRhbTE2UkV3eWExRndlV1paV0dRMk5FZDNjMFJKUXdweFVrRlNPRFJXY1VoRlRWcHNVMU5oUmtVdmVuQlhjWFJCWTI1VVJUTm9TSFJ3ZUZWR1J6aEdZbVZuTDFwQkszSkVNblF3WXpkMWRXdHFNa0l5VUVWWENuZHhjbVJQVTFWMlEwb3pSbVJLYUdOa05DOWFPRE5HYVdGTVMxcDNWbFZxV1cxeldIbHRWR1ZZTldwTWJUaHpRVXhCY2pKMWFVUlhUWGhTUldWQlNIQUtTSFZ5Y2k5ME5XbE5iVlE1Tm5aT2VqbDNhRGx0WjBSbVpFcDVOM2RIZWxkTFQzbHpZV1JEWm5Gd09USmlkWEJtYUM5M09GWTFSRVZXV0N0MlQxRkRiUXB6VTBGQlpYaHlkWFZCVVVWeGVXeFVlVzhyVUdwM2IwdHVhemxDT1UxT05YVlJkWHBSUkZaVll6WXdSamxQVjJKalRXbFdRV2ROUWtGQlIycFJla0pDQ2sxRU9FZEJNVlZrUlZGUk5FMUVZVU5MUjNSc1pWaE9NR0l5Tld4TVYwWjNZVk0xZG1OSFZuVmpNMUpvV1RKemRXTXpXbXBNYlU1elpGaE9NRnBZU1hVS1lrYzVhbGxYZVVoQ1RVTnZZMDFwU0VKTlEyOWlOa0YzUkZGWlNrdHZXa2xvZG1OT1FWRkZURUpSUVVSblowVkNRVWswWkVWc1RHdFFUa2xSVVZSSU5BcERVbVpzTlVsRVNGVTBPSFpGTTIxRU5HYzFiek5yUVVsaFFuWXZiVkJLVVhOV05EbDNVbVUzYzFGQ1VHNW1hRGxKVDJabmVFaHJTSEk1VUU1bk5uZEZDbFkzUlRGbmNGWlljRUpXY1ROb2RrSmpZMGhYYUhSNGMwMUpiek15WWtkemVuUllkRXhCZHpKVlZ5dGlOVVJoTDJsTk1VZFNWbk5IV0cxV1JrcHRiekVLWVRCQldqQlNiRzVEUlZoNFUzVnlWeXQwYzBOVVVISTJTaTlXV1hjclpqUnJiRVpLWm05VVkxbHpVa3h4U0VKaVV6Y3pMMjluWjBKdFkxTmtTbWcyZVFwbGVGbGpObFJFTTJKelVIZHhjVXRyWVVOTllqZDRNVUp0ZWt4UlQweEVORzFRTDNseWREQlliME5wTHpaUUswUkxUMmw0VFRsS2RWUmtjRVpSUW5sNENsaElTeXRuWWpOU1REUllSRUZ2ZGpBd0wxZFVlVEZTWTJveVdFTmxlbFphZG5oNlNEWlVMMUZMYTNJeksxSklSSHB1Y0RWT1kxVm5XbXBaVEN0R00wWUtkbFYyUlZSSE5EMEtMUzB0TFMxRlRrUWdRMFZTVkVsR1NVTkJWRVV0TFMwdExRb0tDZz09IHwgYmFzZTY0IC1kID4gL2V0Yy9jZXJ0cy9jYWNlcnQKCnN5c3RlbWN0bCBkYWVtb24tcmVsb2FkCnN5c3RlbWN0bCByZXN0YXJ0IGt1YmVsZXQuc2VydmljZQpzeXN0ZW1jdGwgZGlzYWJsZSB1ZncKc3lzdGVtY3RsIG1hc2sgdWZ3CgojIFNldHVwIGNlcnRpZmljYXRlcwpta2RpciAtIC9ldGMva3ViZXJuZXRlcy9wa2kgL2V0Yy9rdWJlcm5ldGVzL3BraS9ldGNkCmNhdCA+IC9ldGMva3ViZXJuZXRlcy9wa2kvY2EuY3J0IDw8RU9GCnt7IC5DQUNlcnQgfX0KRU9GCgpjYXQgPiAvZXRjL2t1YmVybmV0ZXMvcGtpL2NhLmtleSA8PEVPRgp7eyAuQ0FLZXkgfX0KRU9GCgpjYXQgPiAvZXRjL2t1YmVybmV0ZXMvcGtpL2V0Y2QvY2EuY3J0IDw8RU9GCnt7IC5FdGNkQ0FDZXJ0IH19CkVPRgoKY2F0ID4gL2V0Yy9rdWJlcm5ldGVzL3BraS9ldGNkL2NhLmtleSA8PEVPRgp7eyAuRXRjZENBS2V5IH19CkVPRgoKY2F0ID4gL2V0Yy9rdWJlcm5ldGVzL3BraS9mcm9udC1wcm94eS1jYS5jcnQgPDxFT0YKe3sgLkZyb250UHJveHlDQUNlcnQgfX0KRU9GCgpjYXQgPiAvZXRjL2t1YmVybmV0ZXMvcGtpL2Zyb250LXByb3h5LWNhLmtleSA8PEVPRgp7eyAuRnJvbnRQcm94eUNBS2V5IH19CkVPRgoKY2F0ID4gL2V0Yy9rdWJlcm5ldGVzL3BraS9zYS5wdWIgPDxFT0YKe3sgLlNhQ2VydCB9fQpFT0YKCmNhdCA+IC9ldGMva3ViZXJuZXRlcy9wa2kvc2Eua2V5IDw8RU9GCnt7IC5TYUtleSB9fQpFT0YKCiMgU2V0IHVwIGt1YmVhZG0gY29uZmlnIGZpbGUgdG8gcGFzcyBwYXJhbWV0ZXJzIHRvIGt1YmVhZG0gaW5pdC4KY2F0ID4gL2V0Yy9rdWJlcm5ldGVzL2t1YmVhZG1fY29uZmlnLnlhbWwgPDxFT0YKe3sgLkt1YmVhZG1Db25maWcgfX0KRU9GCgplY2hvICJSZXBsYWNpbmcgT1BFTlNUQUNLX0lQVjRfTE9DQUwgaW4ga3ViZWFkbV9jb25maWcgdGhyb3VnaCAke09QRU5TVEFDS19JUFY0X0xPQ0FMfSIKL2Jpbi9zZWQgLWkgInMjXCR7T1BFTlNUQUNLX0lQVjRfTE9DQUx9IyR7T1BFTlNUQUNLX0lQVjRfTE9DQUx9IyIgL2V0Yy9rdWJlcm5ldGVzL2t1YmVhZG1fY29uZmlnLnlhbWwKCiMgQ3JlYXRlIGFuZCBzZXQgYnJpZGdlLW5mLWNhbGwtaXB0YWJsZXMgdG8gMSB0byBwYXNzIHRoZSBrdWJlYWRtIHByZWZsaWdodCBjaGVjay4KIyBXb3JrYXJvdW5kIHdhcyBmb3VuZCBoZXJlOgojIGh0dHA6Ly96ZWVzaGFuYWxpLmNvbS9zeXNhZG1pbi9maXhlZC1zeXNjdGwtY2Fubm90LXN0YXQtcHJvY3N5c25ldGJyaWRnZWJyaWRnZS1uZi1jYWxsLWlwdGFibGVzLwptb2Rwcm9iZSBicl9uZXRmaWx0ZXIKCmt1YmVhZG0gaW5pdCAtdiAxMCAtLWNvbmZpZyAvZXRjL2t1YmVybmV0ZXMva3ViZWFkbV9jb25maWcueWFtbApmb3IgdHJpZXMgaW4gJChzZXEgMSA2MCk7IGRvCiAgICBrdWJlY3RsIC0ta3ViZWNvbmZpZyAvZXRjL2t1YmVybmV0ZXMva3ViZWxldC5jb25mIGFubm90YXRlIC0tb3ZlcndyaXRlIG5vZGUgJChob3N0bmFtZSkgbWFjaGluZT0ke01BQ0hJTkV9ICYmIGJyZWFrCiAgICBzbGVlcCAxCmRvbmUKIyBCeSBkZWZhdWx0LCB1c2UgY2FsaWNvIGZvciBjb250YWluZXIgbmV0d29yayBwbHVnaW4sIHNob3VsZCBtYWtlIHRoaXMgY29uZmlndXJhYmxlLgprdWJlY3RsIC0ta3ViZWNvbmZpZyAvZXRjL2t1YmVybmV0ZXMvYWRtaW4uY29uZiBhcHBseSAtZiBodHRwczovL2RvY3MucHJvamVjdGNhbGljby5vcmcvdjMuNS9nZXR0aW5nLXN0YXJ0ZWQva3ViZXJuZXRlcy9pbnN0YWxsYXRpb24vaG9zdGVkL2t1YmVybmV0ZXMtZGF0YXN0b3JlL2NhbGljby1uZXR3b3JraW5nLzEuNy9jYWxpY28ueWFtbAplY2hvIGRvbmUuCikgMj4mMSB8IHRlZSAvdmFyL2xvZy9zdGFydHVwLmxvZwo=
+kind: Secret
+metadata:
+  name: master-user-data
+  namespace: openstack-provider-system
+type: Opaque
+---
+apiVersion: v1
+data:
+  userData: IyEvdXNyL2Jpbi9lbnYgYmFzaApzZXQgLWUKc2V0IC14CigKS1VCRUxFVF9WRVJTSU9OPXt7IC5NYWNoaW5lLlNwZWMuVmVyc2lvbnMuS3ViZWxldCB9fQpOQU1FU1BBQ0U9e3sgLk1hY2hpbmUuT2JqZWN0TWV0YS5OYW1lc3BhY2UgfX0KTUFDSElORT0kTkFNRVNQQUNFCk1BQ0hJTkUrPSIvIgpNQUNISU5FKz17eyAuTWFjaGluZS5PYmplY3RNZXRhLk5hbWUgfX0KCnN3YXBvZmYgLWEKZWNobyAiMTI3LjAuMC4xICQoaG9zdG5hbWUpIiAgPj4gL2V0Yy9ob3N0cwojIGRpc2FibGUgc3dhcCBpbiBmc3RhYgpzZWQgLWkuYmFrIC1yICdzLyguKyBzd2FwIC4rKS8jXDEvJyAvZXRjL2ZzdGFiCmFwdC1nZXQgdXBkYXRlCmFwdC1nZXQgaW5zdGFsbCAteSBhcHQtdHJhbnNwb3J0LWh0dHBzIHByaXBzCmFwdC1rZXkgYWR2IC0ta2V5c2VydmVyIGhrcDovL2tleXNlcnZlci51YnVudHUuY29tIC0tcmVjdi1rZXlzIEY3NjIyMTU3MkM1MjYwOUQKY2F0IDw8RU9GID4gL2V0Yy9hcHQvc291cmNlcy5saXN0LmQvazhzLmxpc3QKZGViIFthcmNoPWFtZDY0XSBodHRwczovL2FwdC5kb2NrZXJwcm9qZWN0Lm9yZy9yZXBvIHVidW50dS14ZW5pYWwgbWFpbgpFT0YKYXB0LWdldCB1cGRhdGUKCmZ1bmN0aW9uIGluc3RhbGxfY29uZmlndXJlX2RvY2tlciAoKSB7CiAgICAjIHByZXZlbnQgZG9ja2VyIGZyb20gYXV0by1zdGFydGluZwogICAgZWNobyAiZXhpdCAxMDEiID4gL3Vzci9zYmluL3BvbGljeS1yYy5kCiAgICBjaG1vZCAreCAvdXNyL3NiaW4vcG9saWN5LXJjLmQKICAgIHRyYXAgInJtIC91c3Ivc2Jpbi9wb2xpY3ktcmMuZCIgUkVUVVJOCiAgICBhcHQtZ2V0IGluc3RhbGwgLXkgZG9ja2VyLmlvCiAgICBlY2hvICdET0NLRVJfT1BUUz0iLS1pcHRhYmxlcz1mYWxzZSAtLWlwLW1hc3E9ZmFsc2UiJyA+IC9ldGMvZGVmYXVsdC9kb2NrZXIKCiAgICAjIFJlc2V0IGlwdGFibGVzIGNvbmZpZwogICAgbWtkaXIgLXAgL2V0Yy9zeXN0ZW1kL3N5c3RlbS9kb2NrZXIuc2VydmljZS5kCiAgICBjYXQgPiAvZXRjL3N5c3RlbWQvc3lzdGVtL2RvY2tlci5zZXJ2aWNlLmQvMTAtaXB0YWJsZXMuY29uZiA8PEVPRgpbU2VydmljZV0KRW52aXJvbm1lbnRGaWxlPS9ldGMvZGVmYXVsdC9kb2NrZXIKRXhlY1N0YXJ0PQpFeGVjU3RhcnQ9L3Vzci9iaW4vZG9ja2VyZCAtSCBmZDovLyBcJERPQ0tFUl9PUFRTCkVPRgoKICAgIHN5c3RlbWN0bCBkYWVtb24tcmVsb2FkCiAgICBzeXN0ZW1jdGwgZW5hYmxlIGRvY2tlcgogICAgc3lzdGVtY3RsIHN0YXJ0IGRvY2tlcgp9CgppbnN0YWxsX2NvbmZpZ3VyZV9kb2NrZXIKCmN1cmwgLXMgaHR0cHM6Ly9wYWNrYWdlcy5jbG91ZC5nb29nbGUuY29tL2FwdC9kb2MvYXB0LWtleS5ncGcgfCBhcHQta2V5IGFkZCAtCmNhdCA8PEVPRiA+IC9ldGMvYXB0L3NvdXJjZXMubGlzdC5kL2t1YmVybmV0ZXMubGlzdApkZWIgaHR0cDovL2FwdC5rdWJlcm5ldGVzLmlvLyBrdWJlcm5ldGVzLXhlbmlhbCBtYWluCkVPRgphcHQtZ2V0IHVwZGF0ZQoKIyBOZWVkZWQgZm9yIHRoZSBub2RlIGFuZCBrdWJlYWRtIHByZWZsaWdodHMKbW9kcHJvYmUgaXBfdnNfc2ggaXBfdnMgaXBfdnNfcnIgaXBfdnNfd3JyCgpta2RpciAtcCAvZXRjL2t1YmVybmV0ZXMvCiMgT3VyIERlYmlhbiBwYWNrYWdlcyBoYXZlIHZlcnNpb25zIGxpa2UgIjEuOC4wLTAwIiBvciAiMS44LjAtMDEiLiBEbyBhIHByZWZpeAojIHNlYXJjaCBiYXNlZCBvbiBvdXIgU2VtVmVyIHRvIGZpbmQgdGhlIHJpZ2h0IChuZXdlc3QpIHBhY2thZ2UgdmVyc2lvbi4KZnVuY3Rpb24gZ2V0dmVyc2lvbigpIHsKCW5hbWU9JDEKCXByZWZpeD0kMgoJdmVyc2lvbj0kKGFwdC1jYWNoZSBtYWRpc29uICRuYW1lIHwgYXdrICd7IHByaW50ICQzIH0nIHwgZ3JlcCBeJHByZWZpeCB8IGhlYWQgLW4xKQoJaWYgW1sgLXogIiR2ZXJzaW9uIiBdXTsgdGhlbgoJCWVjaG8gQ2FuXCd0IGZpbmQgcGFja2FnZSAkbmFtZSB3aXRoIHByZWZpeCAkcHJlZml4CgkJZXhpdCAxCglmaQoJZWNobyAkdmVyc2lvbgp9CktVQkVMRVQ9JChnZXR2ZXJzaW9uIGt1YmVsZXQgJHtLVUJFTEVUX1ZFUlNJT059LSkKS1VCRUFETT0kKGdldHZlcnNpb24ga3ViZWFkbSAke0tVQkVMRVRfVkVSU0lPTn0tKQpLVUJFQ1RMPSQoZ2V0dmVyc2lvbiBrdWJlY3RsICR7S1VCRUxFVF9WRVJTSU9OfS0pCmFwdC1nZXQgaW5zdGFsbCAteSBrdWJlbGV0PSR7S1VCRUxFVH0ga3ViZWFkbT0ke0tVQkVBRE19IGt1YmVjdGw9JHtLVUJFQ1RMfQojIGt1YmVhZG0gdXNlcyAxMHRoIElQIGFzIEROUyBzZXJ2ZXIKCiMgV3JpdGUgdGhlIGNsb3VkLmNvbmYgc28gdGhhdCB0aGUga3ViZWxldCBjYW4gdXNlIGl0LgplY2hvIFcwZHNiMkpoYkYwS1lYVjBhQzExY213OWFIUjBjSE02THk4eE9USXVNVFk0TGpFeE1pNHlNREE2TlRBd01BcDFjMlZ5Ym1GdFpUMGlZV1J0YVc0aUNuQmhjM04zYjNKa1BTSndZWE56ZDI5eVpDSUtjbVZuYVc5dVBTSlNaV2RwYjI1UGJtVWlDblJsYm1GdWRDMXBaRDBpWmpKbE9EWXpOVEJpWXpReE5EVXpORGd4Wm1ZeE5UYzBOVFV3WVRReE16SWlDbVJ2YldGcGJpMXVZVzFsUFNKa1pXWmhkV3gwSWdvS0lDQmpZUzFtYVd4bFBTSXZaWFJqTDJObGNuUnpMMk5oWTJWeWRDSUtJQ0FLIHwgYmFzZTY0IC1kID4gL2V0Yy9rdWJlcm5ldGVzL2Nsb3VkLmNvbmYKbWtkaXIgL2V0Yy9jZXJ0cwplY2hvIExTMHRMUzFDUlVkSlRpQkRSVkpVU1VaSlEwRlVSUzB0TFMwdENrMUpTVVJCVkVORFFXVnRaMEYzU1VKQlowbFJZV0pCUzBwSWVpdERiMHRVU2pSaVZDdEZOMFkxYWtGT1FtZHJjV2hyYVVjNWR6QkNRVkZ6UmtGRVFXRUtUVkpuZDBabldVUldVVkZFUlhjNGVFOVVTWFZOVkZrMFRHcEZlRTFwTkhsTlJFRjNTR2hqVGsxVWEzZFBWRVY0VFZSbmVrOVVTVE5YYUdOT1RXcHJkd3BQVkVFMFRWUm5lazlVU1ROWGFrRmhUVkpuZDBabldVUldVVkZFUlhjNGVFOVVTWFZOVkZrMFRHcEZlRTFwTkhsTlJFRjNaMmRGYVUxQk1FZERVM0ZIQ2xOSllqTkVVVVZDUVZGVlFVRTBTVUpFZDBGM1oyZEZTMEZ2U1VKQlVVUldXV0Z5VW0xWWFWQXdXbFpLUVU1TldWQlZNRXhMZFhwdlVVOWhaMWRQZDNNS2VqVlBVSE15UlZBNGJtODNNRkJ6UWswclVtRlpWalZoWlc5T04yWlBRa1J1TjNkeFNtaENhVWQ0YW0xNlJFd3lhMUZ3ZVdaWldHUTJORWQzYzBSSlF3cHhVa0ZTT0RSV2NVaEZUVnBzVTFOaFJrVXZlbkJYY1hSQlkyNVVSVE5vU0hSd2VGVkdSemhHWW1WbkwxcEJLM0pFTW5Rd1l6ZDFkV3RxTWtJeVVFVlhDbmR4Y21SUFUxVjJRMG96Um1SS2FHTmtOQzlhT0ROR2FXRk1TMXAzVmxWcVdXMXpXSGx0VkdWWU5XcE1iVGh6UVV4QmNqSjFhVVJYVFhoU1JXVkJTSEFLU0hWeWNpOTBOV2xOYlZRNU5uWk9lamwzYURsdFowUm1aRXA1TjNkSGVsZExUM2x6WVdSRFpuRndPVEppZFhCbWFDOTNPRlkxUkVWV1dDdDJUMUZEYlFwelUwRkJaWGh5ZFhWQlVVVnhlV3hVZVc4clVHcDNiMHR1YXpsQ09VMU9OWFZSZFhwUlJGWlZZell3UmpsUFYySmpUV2xXUVdkTlFrRkJSMnBSZWtKQ0NrMUVPRWRCTVZWa1JWRlJORTFFWVVOTFIzUnNaVmhPTUdJeU5XeE1WMFozWVZNMWRtTkhWblZqTTFKb1dUSnpkV016V21wTWJVNXpaRmhPTUZwWVNYVUtZa2M1YWxsWGVVaENUVU52WTAxcFNFSk5RMjlpTmtGM1JGRlpTa3R2V2tsb2RtTk9RVkZGVEVKUlFVUm5aMFZDUVVrMFpFVnNUR3RRVGtsUlVWUklOQXBEVW1ac05VbEVTRlUwT0haRk0yMUVOR2MxYnpOclFVbGhRbll2YlZCS1VYTldORGwzVW1VM2MxRkNVRzVtYURsSlQyWm5lRWhyU0hJNVVFNW5ObmRGQ2xZM1JURm5jRlpZY0VKV2NUTm9ka0pqWTBoWGFIUjRjMDFKYnpNeVlrZHplblJZZEV4QmR6SlZWeXRpTlVSaEwybE5NVWRTVm5OSFdHMVdSa3B0YnpFS1lUQkJXakJTYkc1RFJWaDRVM1Z5Vnl0MGMwTlVVSEkyU2k5V1dYY3JaalJyYkVaS1ptOVVZMWx6VWt4eFNFSmlVemN6TDI5blowSnRZMU5rU21nMmVRcGxlRmxqTmxSRU0ySnpVSGR4Y1V0cllVTk5ZamQ0TVVKdGVreFJUMHhFTkcxUUwzbHlkREJZYjBOcEx6WlFLMFJMVDJsNFRUbEtkVlJrY0VaUlFubDRDbGhJU3l0bllqTlNURFJZUkVGdmRqQXdMMWRVZVRGU1kyb3lXRU5sZWxaYWRuaDZTRFpVTDFGTGEzSXpLMUpJUkhwdWNEVk9ZMVZuV21wWlRDdEdNMFlLZGxWMlJWUkhORDBLTFMwdExTMUZUa1FnUTBWU1ZFbEdTVU5CVkVVdExTMHRMUW9LQ2c9PSB8IGJhc2U2NCAtZCA+IC9ldGMvY2VydHMvY2FjZXJ0CgojIFNldCB1cCBrdWJlYWRtIGNvbmZpZyBmaWxlIHRvIHBhc3MgdG8ga3ViZWFkbSBqb2luLgpjYXQgPiAvZXRjL2t1YmVybmV0ZXMva3ViZWFkbV9jb25maWcueWFtbCA8PEVPRgp7eyAuS3ViZWFkbUNvbmZpZyB9fQpFT0YKCnN5c3RlbWN0bCBkYWVtb24tcmVsb2FkCnN5c3RlbWN0bCByZXN0YXJ0IGt1YmVsZXQuc2VydmljZQpzeXN0ZW1jdGwgZGlzYWJsZSB1ZncKc3lzdGVtY3RsIG1hc2sgdWZ3CgprdWJlYWRtIC12IDEwIGpvaW4gLS1pZ25vcmUtcHJlZmxpZ2h0LWVycm9ycz1hbGwgLS1jb25maWcgL2V0Yy9rdWJlcm5ldGVzL2t1YmVhZG1fY29uZmlnLnlhbWwKZm9yIHRyaWVzIGluICQoc2VxIDEgNjApOyBkbwoJa3ViZWN0bCAtLWt1YmVjb25maWcgL2V0Yy9rdWJlcm5ldGVzL2t1YmVsZXQuY29uZiBhbm5vdGF0ZSAtLW92ZXJ3cml0ZSBub2RlICQoaG9zdG5hbWUpIG1hY2hpbmU9JHtNQUNISU5FfSAmJiBicmVhawoJc2xlZXAgMQpkb25lCmVjaG8gZG9uZS4KKSAyPiYxIHwgdGVlIC92YXIvbG9nL3N0YXJ0dXAubG9nCg==
+kind: Secret
+metadata:
+  name: worker-user-data
+  namespace: openstack-provider-system
+type: Opaque
