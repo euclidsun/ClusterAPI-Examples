@@ -1,46 +1,47 @@
-1. Project Home Page:
+# This repo is for the detailed examples when using ClusterAPI for OpenStack
+# CAPO Project Home Page:
   the Cluster API Provider OpenStack repo is here: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/tree/release-0.1
 
-2. Installation Instructions:
-2.1 prepare the environment:
+# Prepare the environment:
     a. command line tools: kubectl, kind, go, docker
     b. download the clusterctl source code, and compile the executable binary for clusterctl
     c. prepare the openstack environment, you need below things:
         - uuid of network, security group for k8s cluster
         - image name for k8s nodes creation
         - the floating ip to ssh the k8s nodes
-        - the keypair for ssh the k8s nodes
+        - cacert of OpenStack AuthURL if you are using https.
         - uuid of project, user name, password, domain name, region name
-    d. the client pc you are running the cli tools should have the remote access to the Nova Node you will be creating.
+    d. the client pc you are running the cli tools should have the remote access to the Nova Master Node(floating ip) you will be creating.
 
-3. step-by-step instructions:
-3.1 get the required command line tools installed
+# step-by-step instructions:
+## get the required command line tools installed
     Docker: https://docs.docker.com/install/linux/docker-ce/ubuntu/
     Kind: https://github.com/kubernetes-sigs/kind
     Go: download from https://golang.org/dl/
-        tar -C /usr/local -xzf go$VERSION.$OS-$ARCH.tar.gz
-        export PATH=$PATH:/usr/local/go/bin
+        `tar -C /usr/local -xzf go$VERSION.$OS-$ARCH.tar.gz`
+        `export PATH=$PATH:/usr/local/go/bin`
     yq: a lightweight and portable command-line YAML processor, download from  https://github.com/mikefarah/yq/releases
 
-3.2 compile the clusterctl, notes: the command is a bit different for release-0.1
+## compile the clusterctl, notes: the command is a bit different for release-0.1
     git clone https://github.com/kubernetes-sigs/cluster-api-provider-openstack $GOPATH/src/sigs.k8s.io/cluster-api-provider-openstack
     cd $GOPATH/src/sigs.k8s.io/cluster-api-provider-openstack/
     make clusterctl
 
     Or you could compile the entire docker image:
+```
     export REGISTRY=your_repo_name #your docker hub repo name
     export VERSION=your_version #the verion you want to make in repo
     export DOCKER_USERNAME=your_docker_hub_user #upload with your name
     export DOCKER_PASSWORD=your_docker_hub_password #upload with your credential
     make upload-images
-
-3.3 prepare the openstack yaml files:
+```
+## prepare the openstack yaml files:
 
     - cloud.yaml
     Goto examples under source code /root/go/src/sigs.k8s.io/cluster-api-provider-openstack/cmd/clusterctl/examples/openstack
     Create a file cloud.yaml, which will have your openstack access info, example content as below.
     notes: cacert should point to the file of the cert of auth_url.
-
+```
     clouds:
     openstack:
         auth:
@@ -55,9 +56,9 @@
         identity_api_version: 3
         verify: false
         cacert: ./ca.pem
-
+```
     - generate yaml files for cluster api, it will output to ./out folder by default.
-    ./generate-yaml.sh ./clouds.yaml openstack ubuntu
+`     ./generate-yaml.sh ./clouds.yaml openstack ubuntu`
 
     - modify the ./out/cluster.yaml file:
     update cluster.yaml for the desired k8s cluster.
@@ -84,6 +85,7 @@
 
     - during the bootstrap process, the cluster CRD/info will be moved from bootstrap into target cluster, and master node will create the rest worker nodes.
     after a few minutes, you should be able to see your nova instances be created.
+```
     # openstack server list
     +--------------------------------------+------------------------+--------+-------------------------------+--------+-----------+
     | ID                                   | Name                   | Status | Networks                      | Image  | Flavor    |
@@ -92,4 +94,4 @@
     | e59e4174-09f6-473f-a3fd-caa1df277b46 | openstack-master-9kkv9 | ACTIVE | net10=10.10.10.79, 5.5.5.171  | ubuntu | m1.medium |
     | 80d1d814-9ccf-4c98-9f8a-905c525ea975 | myvm                   | ACTIVE | net10=10.10.10.233, 5.5.5.200 | ubuntu | m1.small  |
     +--------------------------------------+------------------------+--------+-------------------------------+--------+-----------+
-
+```
