@@ -1,90 +1,76 @@
 # This repo is for the detailed examples when using ClusterAPI for OpenStack
 # CAPO Project Home Page:
-  the Cluster API Provider OpenStack repo is here: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/tree/release-0.1
+The Cluster API Provider OpenStack repo is here: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/tree/release-0.1
 
 # Prepare the environment:
-    a. command line tools: kubectl, kind, go, docker
-    b. download the clusterctl source code, and compile the executable binary for clusterctl
-    c. prepare the openstack environment, you need below things:
-        - uuid of network, security group for k8s cluster
-        - image name for k8s nodes creation
-        - the floating ip to ssh the k8s nodes
-        - cacert of OpenStack AuthURL if you are using https.
-        - uuid of project, user name, password, domain name, region name
-    d. the client pc you are running the cli tools should have the remote access to the Nova Master Node(floating ip) you will be creating.
+a. command line tools: kubectl, kind, go, docker
+b. download the clusterctl source code, and compile the executable binary for clusterctl
+c. prepare the openstack environment, you need below things:
+   - uuid of network, security group for k8s cluster
+   - image name for k8s nodes creation
+   - the floating ip to ssh the k8s nodes
+   - cacert of OpenStack AuthURL if you are using https.
+   - uuid of project, user name, password, domain name, region name
+d. the client pc you are running the cli tools should have the remote access to the Nova Master Node(floating ip) you will be creating.
 
 # step-by-step instructions:
 ## get the required command line tools installed
-    Docker: https://docs.docker.com/install/linux/docker-ce/ubuntu/
-    Kind: https://github.com/kubernetes-sigs/kind
-    Go: download from https://golang.org/dl/
-        `tar -C /usr/local -xzf go$VERSION.$OS-$ARCH.tar.gz`
-        `export PATH=$PATH:/usr/local/go/bin`
-    yq: a lightweight and portable command-line YAML processor, download from  https://github.com/mikefarah/yq/releases
+Docker: https://docs.docker.com/install/linux/docker-ce/ubuntu/
+Kind: https://github.com/kubernetes-sigs/kind
+Go: download from https://golang.org/dl/
+    `tar -C /usr/local -xzf go$VERSION.$OS-$ARCH.tar.gz`
+    `export PATH=$PATH:/usr/local/go/bin`
+yq: a lightweight and portable command-line YAML processor, download from  https://github.com/mikefarah/yq/releases
 
 ## compile the clusterctl, notes: the command is a bit different for release-0.1
-    git clone https://github.com/kubernetes-sigs/cluster-api-provider-openstack $GOPATH/src/sigs.k8s.io/cluster-api-provider-openstack
-    cd $GOPATH/src/sigs.k8s.io/cluster-api-provider-openstack/
-    make clusterctl
-
-    Or you could compile the entire docker image:
 ```
-    export REGISTRY=your_repo_name #your docker hub repo name
-    export VERSION=your_version #the verion you want to make in repo
-    export DOCKER_USERNAME=your_docker_hub_user #upload with your name
-    export DOCKER_PASSWORD=your_docker_hub_password #upload with your credential
-    make upload-images
+git clone https://github.com/kubernetes-sigs/cluster-api-provider-openstack $GOPATH/src/sigs.k8s.io/cluster-api-provider-openstack
+cd $GOPATH/src/sigs.k8s.io/cluster-api-provider-openstack/
+make clusterctl
+```
+Or you could compile the entire docker image:
+```
+export REGISTRY=your_repo_name #your docker hub repo name
+export VERSION=your_version #the verion you want to make in repo
+export DOCKER_USERNAME=your_docker_hub_user #upload with your name
+export DOCKER_PASSWORD=your_docker_hub_password #upload with your credential
+make upload-images
 ```
 ## prepare the openstack yaml files:
+- cloud.yaml
+Goto examples under source code /root/go/src/sigs.k8s.io/cluster-api-provider-openstack/cmd/clusterctl/examples/openstack
+Create a file cloud.yaml, which will have your openstack access info, example content as in yaml folder.
+notes: cacert should point to the file of the cert of auth_url.
 
-    - cloud.yaml
-    Goto examples under source code /root/go/src/sigs.k8s.io/cluster-api-provider-openstack/cmd/clusterctl/examples/openstack
-    Create a file cloud.yaml, which will have your openstack access info, example content as below.
-    notes: cacert should point to the file of the cert of auth_url.
+- generate yaml files for cluster api, it will output to ./out folder by default.
+`./generate-yaml.sh ./clouds.yaml openstack ubuntu`
+
+- modify the ./out/cluster.yaml file:
+  update cluster.yaml for the desired k8s cluster.
+  please be noted that the pod cidr value MUST be the same as the CNI (calico or flannel) component value in their yaml files.
+  please refer to this file ./examples/openstack/provider-component/user-data/ubuntu/master-user-data.sh, 
+  this file will be run by cloud-init inside master node during the initialization.
+
+- modify the ./out/yaml files with your openstack environment info:
+```  sed -i 's/<Available Floating IP>/your_floating_ip/' examples/openstack/out/*.yaml
+  #Please be noted there are multiple floating ip need to update.
+
+  sed -i 's/<Kubernetes Network ID>/your_neutron_network_id/g' examples/openstack/out/*.yaml
+  sed -i 's/<Security Group ID>/your_neutron_secgroup_id/g' examples/openstack/out/*.yaml
+  sed -i 's/<Image Name>/your_image_NAME/g' examples/openstack/out/*.yaml
+  sed -i 's/<apiServerLoadBalancer or master IP>/your_master_node_floating_ip/g' examples/openstack/out/*.yaml
 ```
-    clouds:
-    openstack:
-        auth:
-            auth_url: "https://192.168.112.200:5000"
-            username: "admin"
-            password: "password"
-            project_id: f2e86350bc41453481ff1574550a4132
-            domain_name: "default"
-            user_domain_name: "default"
-        region_name: "RegionOne"
-        interface: "public"
-        identity_api_version: 3
-        verify: false
-        cacert: ./ca.pem
-```
-    - generate yaml files for cluster api, it will output to ./out folder by default.
-`     ./generate-yaml.sh ./clouds.yaml openstack ubuntu`
+- create a keypair in openstack
+  openstack keypair create --public-key ~/.ssh/openstack_tmp.pub cluster-api-provider-openstack
 
-    - modify the ./out/cluster.yaml file:
-    update cluster.yaml for the desired k8s cluster.
-    please be noted that the pod cidr value MUST be the same as the CNI (calico or flannel) component value in their yaml files.
-    please refer to this file ./examples/openstack/provider-component/user-data/ubuntu/master-user-data.sh, 
-    this file will be run by cloud-init inside master node during the initialization.
-
-    - modify the ./out/yaml files with your openstack environment info:
-    sed -i 's/<Available Floating IP>/your_floating_ip/' examples/openstack/out/*.yaml
-    Please be noted there are multiple floating ip need to update.
-
-    sed -i 's/<Kubernetes Network ID>/your_neutron_network_id/g' examples/openstack/out/*.yaml
-    sed -i 's/<Security Group ID>/your_neutron_secgroup_id/g' examples/openstack/out/*.yaml
-    sed -i 's/<Image Name>/your_image_NAME/g' examples/openstack/out/*.yaml
-    sed -i 's/<apiServerLoadBalancer or master IP>/your_master_node_floating_ip/g' examples/openstack/out/*.yaml
-
-    - create a keypair in openstack
-    openstack keypair create --public-key ~/.ssh/openstack_tmp.pub cluster-api-provider-openstack
-
-    - creat the cluster:
+- creat the cluster:
+``` 
     ./clusterctl create cluster --bootstrap-type kind --provider openstack \
     -c examples/openstack/out/cluster.yaml -m examples/openstack/out/machines.yaml \
     -p examples/openstack/out/provider-components.yaml
-
-    - during the bootstrap process, the cluster CRD/info will be moved from bootstrap into target cluster, and master node will create the rest worker nodes.
-    after a few minutes, you should be able to see your nova instances be created.
+```
+- during the bootstrap process, the cluster CRD/info will be moved from bootstrap into target cluster, and master node will create the rest worker nodes.
+after a few minutes, you should be able to see your nova instances be created.
 ```
     # openstack server list
     +--------------------------------------+------------------------+--------+-------------------------------+--------+-----------+
