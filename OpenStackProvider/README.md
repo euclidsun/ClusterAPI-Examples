@@ -1,17 +1,18 @@
 # This repo is for the detailed examples when using ClusterAPI for OpenStack
 # CAPO Project Home Page:
-The Cluster API Provider OpenStack repo is here: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/tree/release-0.1
+The Cluster API Provider OpenStack repo is here: 
+https://github.com/kubernetes-sigs/cluster-api-provider-openstack/tree/release-0.1
 
 # Prepare the environment:
-a. command line tools: kubectl, kind, go, docker
-b. download the clusterctl source code, and compile the executable binary for clusterctl
-c. prepare the openstack environment, you need below things:
-   - uuid of network, security group for k8s cluster
-   - image name for k8s nodes creation
-   - the floating ip to ssh the k8s nodes
-   - cacert of OpenStack AuthURL if you are using https.
-   - uuid of project, user name, password, domain name, region name
-d. the client pc you are running the cli tools should have the remote access to the Nova Master Node(floating ip) you will be creating.
+- command line tools: kubectl, kind, go, docker
+- download the clusterctl source code, and compile the executable binary for clusterctl
+- prepare the openstack environment, you need below things:
+  -- uuid of network, security group for k8s cluster
+  -- image name for k8s nodes creation
+  -- the floating ip to ssh the k8s nodes
+  -- cacert of OpenStack AuthURL if you are using https.
+  -- uuid of project, user name, password, domain name, region name
+- the client pc you are running the cli tools should have the remote access to the Nova Master Node(floating ip) you will be creating.
 
 # step-by-step instructions:
 ## get the required command line tools installed
@@ -38,8 +39,8 @@ make upload-images
 ```
 ## prepare the openstack yaml files:
 - cloud.yaml
-Goto examples under source code /root/go/src/sigs.k8s.io/cluster-api-provider-openstack/cmd/clusterctl/examples/openstack
-Create a file cloud.yaml, which will have your openstack access info, example content as in yaml folder.
+Goto examples under source code `$GOPATH/src/sigs.k8s.io/cluster-api-provider-openstack/cmd/clusterctl/examples/openstack`
+Create a file cloud.yaml, which needs the target openstack env info, example content as in yaml folder.
 notes: cacert should point to the file of the cert of auth_url.
 
 - generate yaml files for cluster api, it will output to ./out folder by default.
@@ -47,18 +48,19 @@ notes: cacert should point to the file of the cert of auth_url.
 
 - modify the ./out/cluster.yaml file:
   update cluster.yaml for the desired k8s cluster.
-  please be noted that the pod cidr value MUST be the same as the CNI (calico or flannel) component value in their yaml files.
+  **please be noted that the pod cidr value MUST be the same as the CNI (calico or flannel) component value in their yaml files.**
   please refer to this file ./examples/openstack/provider-component/user-data/ubuntu/master-user-data.sh, 
   this file will be run by cloud-init inside master node during the initialization.
 
 - modify the ./out/yaml files with your openstack environment info:
-```  sed -i 's/<Available Floating IP>/your_floating_ip/' examples/openstack/out/*.yaml
-  #Please be noted there are multiple floating ip need to update.
+```
+sed -i 's/<Available Floating IP>/your_floating_ip/' examples/openstack/out/*.yaml
+#Please be noted there are multiple floating ip need to update.
 
-  sed -i 's/<Kubernetes Network ID>/your_neutron_network_id/g' examples/openstack/out/*.yaml
-  sed -i 's/<Security Group ID>/your_neutron_secgroup_id/g' examples/openstack/out/*.yaml
-  sed -i 's/<Image Name>/your_image_NAME/g' examples/openstack/out/*.yaml
-  sed -i 's/<apiServerLoadBalancer or master IP>/your_master_node_floating_ip/g' examples/openstack/out/*.yaml
+sed -i 's/<Kubernetes Network ID>/your_neutron_network_id/g' examples/openstack/out/*.yaml
+sed -i 's/<Security Group ID>/your_neutron_secgroup_id/g' examples/openstack/out/*.yaml
+sed -i 's/<Image Name>/your_image_NAME/g' examples/openstack/out/*.yaml
+sed -i 's/<apiServerLoadBalancer or master IP>/your_master_node_floating_ip/g' examples/openstack/out/*.yaml
 ```
 - create a keypair in openstack
   openstack keypair create --public-key ~/.ssh/openstack_tmp.pub cluster-api-provider-openstack
