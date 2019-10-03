@@ -1,18 +1,19 @@
-# This repo is for the detailed examples when using ClusterAPI for OpenStack
+# Overview
+This repo is for the detailed examples when using ClusterAPI for OpenStack
 # CAPO Project Home Page:
 The Cluster API Provider OpenStack repo is here: 
 https://github.com/kubernetes-sigs/cluster-api-provider-openstack/tree/release-0.1
 
 # Prepare the environment:
-- command line tools: kubectl, kind, go, docker
-- download the clusterctl source code, and compile the executable binary for clusterctl
-- prepare the openstack environment, you need below things:
-  -- uuid of network, security group for k8s cluster
-  -- image name for k8s nodes creation
-  -- the floating ip to ssh the k8s nodes
-  -- cacert of OpenStack AuthURL if you are using https.
-  -- uuid of project, user name, password, domain name, region name
-- the client pc you are running the cli tools should have the remote access to the Nova Master Node(floating ip) you will be creating.
+* command line tools: kubectl, kind, go, docker
+* download the clusterctl source code, and compile the executable binary for clusterctl
+* prepare the openstack environment, you need below things:
+  ** uuid of network, security group for k8s cluster
+  ** image name for k8s nodes creation
+  ** the floating ip to ssh the k8s nodes
+  ** cacert of OpenStack AuthURL if you are using https.
+  ** uuid of project, user name, password, domain name, region name
+* the client pc you are running the cli tools should have the remote access to the Nova Master Node(floating ip) you will be creating.
 
 # step-by-step instructions:
 ## get the required command line tools installed
