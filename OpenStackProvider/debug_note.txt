@@ -1,0 +1,15 @@
+
+docker images
+#list the docker images in local
+
+docker push euclidsun/openstack-cluster-api-controller:090b30f2-dirty
+#push the image to docker hub repo, under euclidsun, with the name of openstack-...-controller, version as xxx-dirty
+
+kubectl run busybox --image=busybox -it /bin/sh
+#inside the container, not all images have ping, ifconfig, traceroute tools, if you want to debug something, busybox could be used.
+
+tail -f /var/log/cloud-init-output.log
+#inside master node, you could monitor the cloud-init progress and output info, which has lots of info about k8s initilization.
+
+journalctl -u kubelet.service
+#this command is to check the kubelet log info, during the experimental of CAPO, i found kubelet could not start because of cloud provider cacert issues.
