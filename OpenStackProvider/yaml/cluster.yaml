@@ -7,7 +7,7 @@ spec:
         services:
             cidrBlocks: ["10.96.0.0/12"]
         pods:
-            cidrBlocks: ["192.168.0.0/16"]
+            cidrBlocks: ["10.244.0.0/16"]
         serviceDomain: "cluster.local"
     providerSpec:
       value:
@@ -16,6 +16,5 @@ spec:
         tags:
           - a_cluster_wide_tag
         clusterConfiguration:
-          controlPlaneEndpoint: 5.5.5.199:6443
+          controlPlaneEndpoint: 5.5.5.171:6443
           kubernetesVersion: 1.15.0
-
